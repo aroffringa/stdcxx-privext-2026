@@ -1,2 +1,2 @@
 draft.html:	draft.md
-	pandoc draft.md > draft.html
+	pandoc --standalone draft.md > draft.html

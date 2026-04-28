@@ -1,3 +1,7 @@
+---
+maxwidth: 65%
+---
+
 Private Extension Methods
 ==========================================
 
@@ -692,7 +696,7 @@ in 2026, there was a preference to use internal linkage by default.
 Changes compared to the 2013 proposal
 ====================
 
-The high level list of changes from the 2013 proposal:
+The high level changes between this proposal and the 2013 proposal are:
 
 - This proposal uses internal leakage by default. The 2013 proposal offered
   this as an alternative. The use of the `static` keyword was simplified
