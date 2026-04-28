@@ -4,7 +4,7 @@ Private Extension Methods (2026 version)
 This is a rewrite of an earlier proposal for private extension methods.
 
 For the current draft go here:
-* TODO
+* https://github.com/aroffringa/stdcxx-privext-2026/blob/main/proposal/draft.md
 
 This idea was discussed on the standard proposal e-mail list with the start of
 the thread here:
