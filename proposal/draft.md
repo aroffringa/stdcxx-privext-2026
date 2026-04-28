@@ -181,14 +181,14 @@ not change the interface of the class.
 High Level Description
 ====================
 
-The basic idea behind this proposal is simple. Just allow the
+The basic idea behind this proposal is simple: Just allow the
 programmer to declare additional class non-virtual private methods
 and static private methods
 which are not present in the class definition. We call these additional
 class methods *private extension methods (PEM)*  and
 *private static extension member functions (PSEMF)*.
 
-All PEM and PSEMFs have internal linkage.
+PEM and PSEMFs have internal linkage.
 
 Declaring private extension methods
 ----------------------------
@@ -237,7 +237,7 @@ We can also declare additional private constructors:
     };
 
     //PEM constructor
-    private Foo::Foo(int i, int j) : _i(i), _j(j) {}
+    private Foo::Foo(int i, int j) : i_(i), j_(j) {}
 
     //Public constructor delegates to the private extension constructor
     Foo::Foo() : Foo(0, 0) {}
@@ -254,7 +254,7 @@ move constructor, move assignment, or destructors. All of the following are erro
     private Foo& Foo::operator=(Foo&&); //Error: Cannot declare a PEM move assignment operator!
     private Foo::~Foo(); //Error: Cannot declare a PEM destructor!
 
-Class Definition visibility and the private keyword
+Class definition visibility and the private keyword
 ----------------------
 
 Any class method which has been declared but not found in the class definition 
@@ -288,10 +288,10 @@ keyword together with the `private` keyword:
         static int sf();
     };
 
-    private void Foo::f1(); //<-PEM
+    private void Foo::a(); //<-PEM
 
-    private static int Foo::f2() { return 42; } //<-PSEMF
-    int Foo::sf() { return f2(); }
+    private static int Foo::b() { return 42; } //<-PSEMF
+    int Foo::sf() { return b(); }
 
 The `static` keyword may appear before or after `private`.
 
@@ -385,6 +385,26 @@ of a class template which calls free function templates.
                               */
 
 
+Other properties of PEMs
+--------------------
+
+For completeness, in addition to what is already discussed, private
+extension methods will have the following properties:
+
+- After defining a PEM or PSEMF, they participate in method look-up as if
+  they were declared as a private method inside the class definition.
+- Private extension methods support the same qualifiers as normal methods,
+  including `const`/`volatile` qualifiers, ref-qualification, exception
+  specification, attributes and trailing return type.
+- The parameter list may include an explicit this parameter to deduce this.
+- Overloading member functions by their parameter list is allowed.
+- Operator overloading using private extension methods is allowed.
+- Declaring a PEM with the same name as a base class method causes the
+  base class method name to be hidden, from that point on, in the same way as
+  when the private method was declared inside the class.
+- Adding `inline` to a private extension method is, as usual, a directive
+  for the compiler to expand the function inline.
+
 Technical Summary
 =====================
     
@@ -394,7 +414,8 @@ In summary, this proposal makes the following changes to the standard:
     class definition. These so called *private extension method*
     declarations must be prefixed by the `private` keyword.
     These methods will have private access control and internal linkage.
-* The programmer may combine the `static` keyword with the `private` keyword to declare a private static extension member function.
+* The programmer may combine the `static` keyword with the `private` keyword
+    to declare a private static extension member function.
 
 Counter Arguments
 ==================
@@ -451,9 +472,19 @@ within the current language \[[GotW076](GotW076)\]. We agree with the author of 
 There are already current workarounds
 --------------------
 
-Likely the most compelling argument against the proposal is that there are already a set of current workarounds.
-Friends and/or nested classes can be used to implement a partial variant of PEM in the current language.
-For this workaround, nested classes are superior to friends because they can be further extended with additional
+Likely the most compelling argument against the proposal is that there are
+already a set of current workarounds:
+
+- Nested classes can be used to implement a partial variant of PEM in the current language.
+- Friend functions can be used to implement functions that access the private data of the class.
+  These can have internal storage. The symbols do however clutter the interface of the class,
+  and it adds dependencies types used in the signature of the method.
+- A friend class declaration can be used to avoid listing the functions in the class interface,
+  and avoids a dependency on types used in the function signatures. These can however not have
+  internal storage.
+- The PIMPL idiom can also be used to hide implementation details. This adds some runtime cost.
+
+For hiding implementation details, nested classes are superior to friends because they can be further extended with additional
 nested sub classes where as all friends have to be declared in the original class definition.
 An example is provided.
 
@@ -464,7 +495,7 @@ Public header file:
         void doWork();
 
       private:
-        int _i;
+        int i_;
 
         struct XHelper;
     };
@@ -473,7 +504,7 @@ Private implementation:
 
     struct X::XHelper {
       static void doWorkHelper(X& x) { //<-PEM
-        x._i = 42;
+        x.i_ = 42;
       }
 
       struct XHelper2;
@@ -481,7 +512,7 @@ Private implementation:
 
     struct X::XHelper::XHelper2 {
       static void doMoreWorkHelper(X& x) { //<-PEM
-        x._i++;
+        x.i_++;
       }
     };
 
@@ -494,7 +525,7 @@ Practically, this achieves most of the benefits of PEM, but it has some drawback
 
 * We still leak the `XHelper` symbol (implementation) to the header file (interface).
 * All of the PEMs implemented by the helper cannot access the data members of X
-    directly. They must use C style syntax `x._i = 42` instead of the more natural `_i = 42` provided by the implicit `this` pointer.
+    directly. They must use C style syntax `x.i_ = 42` instead of the more natural `i_ = 42` provided by the implicit `this` pointer.
 * The set of PEMs are restricted to the class definition of `XHelper`. We cannot arbitrarily introduce new PEMS without modifying `XHelper` or creating yet another subclass of `XHelper`.
 * `XHelper` and all of its methods cannot have internal linkage.
 * `XHelper` static member function signatures cannot use symbols with internal linkage unless `XHelper` itself resides in only one translation unit.
@@ -583,17 +614,17 @@ and Vicente J. Botet Escriba for the handy syntax using private.
       void f(); //<-PEM
       static void g(); //<-PSEMF
 
-      int x_; //<-A static data member. We cannot add data members to Foo.
-              //Maybe this should be a compiler error?
-      static int y_; //<-Another static data member.
+      int x_; //<-Error: cannot add data members to Foo.
+      
+      static int y_; //<-Add a static data member.
 
-      typedef float real; //<-A typedef, which is private to Foo
+      using real = float; //<-An alias, which is private to Foo
 
-      class Bar; //<-Forward declaration of a nested class Foo::Bar
+      class Bar; //<-Forward declaration of a nested private class Foo::Bar
 
-      class Baz {}; //<-Define a nested class Foo::Baz
+      class Baz {}; //<-Define a nested private class Foo::Baz
 
-      friend class Gaz; //<-Error: Cannot declare extended friends! This breaks encapsulation.
+      friend class Gaz; //<-Error: Cannot declare extended friends: this breaks encapsulation.
     };
 
     static private Foo { //<-Ropen Foo's private scope again, this time with internal linkage
@@ -605,6 +636,7 @@ and Vicente J. Botet Escriba for the handy syntax using private.
          /* stuff */
        };
     };
+
 
 Allowing external linkage
 ----------------------
@@ -633,6 +665,7 @@ The syntax for this idea might look like the following:
     extern private static void Foo::f4();
     extern static private void Foo::f4();
 
+
 Use `static` for internal linkage
 ----------------------
 
@@ -654,6 +687,23 @@ position:
 
 In the discussions on the mailing list around 2013 and in the discussions
 in 2026, there was a preference to use internal linkage by default.
+
+
+Changes compared to the 2013 proposal
+====================
+
+The high level list of changes from the 2013 proposal:
+
+- This proposal uses internal leakage by default. The 2013 proposal offered
+  this as an alternative. The use of the `static` keyword was simplified
+  for this reason.
+- References to modules were removed from the proposal. In 2013, a counter
+  argument was that modules may solve this issue, which now no longer holds.
+  The at that time upcoming modules proposal might have been a reason why
+  the proposal didn't progress (No explicit reasons for the lack of
+  progression are known.)
+- Some new arguments for and against that were mentioned on the std proposal
+  mailing list have been incorporated.
 
 Acknowledgements
 ====================
