@@ -7,7 +7,7 @@ Private Extension Methods
 
 * Document Number: -
 * Date: 2026-04-28
-* Programming Language C++, Language Evolution Working Group
+* Programming Language C++
 * Reply-to: André Offringa <offringa@gmail.com>
 
 Introduction
@@ -469,9 +469,10 @@ This is not actually a problem. This example is artificially contrived to exploi
 access control. It is not a common error that would be made by novice programmers nor
 is it an obvious or easy to use tool to abuse access control and write poor interfaces.
 Indeed, many methods of violating access control already exist
-within the current language \[[GotW076](GotW076)\]. We agree with the author of that article.
+within the current language \[[GotW076](GotW076)\]. We agree with the author
+of that article.
 
-"The issue here is of protecting against Murphy vs. protecting against Machiavelli... that is, protecting against accidental misuse (which the language does very well) vs. protecting against deliberate abuse (which is effectively impossible). In the end, if a programmer wants badly enough to subvert the system, he'll find a way," \[[GotW076](GotW076)\].
+> The issue here is of protecting against Murphy vs. protecting against Machiavelli... that is, protecting against accidental misuse (which the language does very well) vs. protecting against deliberate abuse (which is effectively impossible). In the end, if a programmer wants badly enough to subvert the system, he'll find a way, \[[GotW076](GotW076)\].
 
 There are already current workarounds
 --------------------
@@ -641,6 +642,46 @@ and Vicente J. Botet Escriba for the handy syntax using private.
        };
     };
 
+A downside of this is that the use of an anonymous namespace for what often
+will be the common pattern is verbose. It is also inconsistent to declare the
+class in two different namespaces.
+
+Explicitly enabling private extension methods
+----------------------
+
+The issue of introducing an access loophole can be mitigated by requiring the
+class to be marked in some way. A possible syntax for this could be similar
+to the idea of reopening the class, where `public` in front of the class starts
+the definition of a class that allows extending, and `private` is used to
+extend it:
+
+    public class Foo {
+      int a;
+    }
+
+    private class Foo {
+      void SetA(); //<-PEM
+    }
+
+Whereas this would be an error:
+
+    class Foo { //<-No `public` before class: class not marked as extendable
+      int a;
+    }
+
+    private class Foo { //<-Error: reopening a class not marked as extendable
+      void SetA();
+    }
+
+This would solve the newly created loophole, where access can be gainted to the
+private data of a class that is not meant to be accessed. As mentioned before,
+the private access is not for hiding secrets but is to protect against
+accidentally breaking the invariant of the class. For that, explicit marking
+seems to overdo it.
+
+Another argument against this approach is that requiring a class to be marked
+to allow extension is the wrong default setting: protecting a class against
+extension seems hardly ever relevant.
 
 Allowing external linkage
 ----------------------
@@ -652,7 +693,6 @@ different translation units, to support the case in which the implementation
 of a class is spread over multiple translation units.
 
 We could use the `extern` keyword to denote external linkage. 
-We also avoid the need for anonymous namespaces.
 
 The syntax for this idea might look like the following:
 

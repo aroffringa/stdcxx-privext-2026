@@ -172,27 +172,31 @@
   </style>
 </head>
 <body>
-<h1 id="private-extension-methods">Private Extension Methods</h1>
+<h1 data-number="1" id="private-extension-methods"><span
+class="header-section-number">1</span> Private Extension Methods</h1>
 <ul>
 <li>Document Number: -</li>
 <li>Date: 2026-04-28</li>
-<li>Programming Language C++, Language Evolution Working Group</li>
+<li>Programming Language C++</li>
 <li>Reply-to: André Offringa <a href="mailto:offringa@gmail.com"
 class="email">offringa@gmail.com</a></li>
 </ul>
-<h1 id="introduction">Introduction</h1>
+<h1 data-number="2" id="introduction"><span
+class="header-section-number">2</span> Introduction</h1>
 <p>This proposal adds a new mechanism for declaring non-virtual private
 class methods and static private class methods outside of the class
 definition, with internal linkage.</p>
 <p>It is based on an earlier proposal from 2013 by Matthew Fioravante.
 Large parts of his text were reused, following the MIT license.</p>
-<h1 id="impact-on-the-standard">Impact on the standard</h1>
+<h1 data-number="3" id="impact-on-the-standard"><span
+class="header-section-number">3</span> Impact on the standard</h1>
 <p>This proposal is a core language extension. It does not require any
 new keywords. It proposes one additional syntax by reusing an existing
 keyword in a manner congruent with the keyword’s original purpose. The
 new feature does not break any legacy code. Some expressions which used
 to be a compilation error are now valid C++.</p>
-<h1 id="motivation-problem-definition">Motivation: Problem
+<h1 data-number="4" id="motivation-problem-definition"><span
+class="header-section-number">4</span> Motivation: Problem
 Definition</h1>
 <p>Good class design follows the principle of encapsulation. The game of
 encapsulation is the game of hiding as many details as possible,
@@ -202,9 +206,10 @@ complexity of our interface, making it easier to understand and use. We
 also give ourselves much more freedom and flexibility with
 implementation. Any class details not present in the interface can be
 changed without affecting the users of the interface.</p>
-<h2
-id="analysis-of-the-quality-of-encapsulation-enabled-by-the-c-class-model">Analysis
-of the quality of encapsulation enabled by the C++ class model</h2>
+<h2 data-number="4.1"
+id="analysis-of-the-quality-of-encapsulation-enabled-by-the-c-class-model"><span
+class="header-section-number">4.1</span> Analysis of the quality of
+encapsulation enabled by the C++ class model</h2>
 <p>We will perform an analysis of encapsulation provided by the C++
 class mechanism. In C++, a system interface can take the form of a class
 definition. This class definition is normally written in a header file,
@@ -390,7 +395,8 @@ href="#KDEABI">KDEABI</a>].</p>
 <p>We conclude that non-virtual private method and private static member
 function declarations are not a part of the class interface and thus
 should not be required in the class definition.</p>
-<h2 id="practical-concerns">Practical Concerns</h2>
+<h2 data-number="4.2" id="practical-concerns"><span
+class="header-section-number">4.2</span> Practical Concerns</h2>
 <p>High level discussions about encapsulation aside, there are some very
 real practical problems that arise from requiring private method
 declarations in the class definition.</p>
@@ -430,7 +436,8 @@ behavior. Because these signatures are required to be in the definition,
 we are then forced to also include all of the messy conditional
 compilation details into the header files.</li>
 </ul>
-<h2 id="problem-solution">Problem Solution</h2>
+<h2 data-number="4.3" id="problem-solution"><span
+class="header-section-number">4.3</span> Problem Solution</h2>
 <p>We propose that private non-virtual methods and private static
 methods with should be able to be declared outside of the class
 definition, with internal linkage. Not only does this change not break
@@ -443,7 +450,8 @@ which allows programmers to reopen a class and extend its interface
 arbitrarily. We are not proposing or even endorsing any form of mixin
 here. Adding, removing, or changing private methods does not change the
 interface of the class.</p>
-<h1 id="high-level-description">High Level Description</h1>
+<h1 data-number="5" id="high-level-description"><span
+class="header-section-number">5</span> High Level Description</h1>
 <p>The basic idea behind this proposal is simple: Just allow the
 programmer to declare additional class non-virtual private methods and
 static private methods which are not present in the class definition. We
@@ -451,7 +459,8 @@ call these additional class methods <em>private extension methods
 (PEM)</em> and <em>private static extension member functions
 (PSEMF)</em>.</p>
 <p>PEM and PSEMFs have internal linkage.</p>
-<h2 id="declaring-private-extension-methods">Declaring private extension
+<h2 data-number="5.1" id="declaring-private-extension-methods"><span
+class="header-section-number">5.1</span> Declaring private extension
 methods</h2>
 <p>In order to declare a PEM, we simply declare a new class member
 function outside of the class definition and prefix it with the
@@ -481,7 +490,8 @@ int Foo::pubf() {
 int Foo::privf() {
    return i_ * 2;
 }</code></pre>
-<h2 id="private-extension-constructors">Private extension
+<h2 data-number="5.2" id="private-extension-constructors"><span
+class="header-section-number">5.2</span> Private extension
 constructors</h2>
 <p>We can also declare additional private constructors:</p>
 <pre><code>class Foo {
@@ -505,8 +515,10 @@ private Foo&amp; Foo::operator=(const Foo&amp;); //Error: Cannot declare a PEM c
 private Foo::Foo(Foo&amp;&amp;); //Error: Cannot declare a PEM move constructor!
 private Foo&amp; Foo::operator=(Foo&amp;&amp;); //Error: Cannot declare a PEM move assignment operator!
 private Foo::~Foo(); //Error: Cannot declare a PEM destructor!</code></pre>
-<h2 id="class-definition-visibility-and-the-private-keyword">Class
-definition visibility and the private keyword</h2>
+<h2 data-number="5.3"
+id="class-definition-visibility-and-the-private-keyword"><span
+class="header-section-number">5.3</span> Class definition visibility and
+the private keyword</h2>
 <p>Any class method which has been declared but not found in the class
 definition requires the <code>private</code> keyword, otherwise a
 compiler error will ensue. Likewise any method definition which has been
@@ -523,7 +535,8 @@ class Foo {
 
 void Foo::p3(); //&lt;-Error: PEMs must use the private keyword!
 private void Foo::p2() {} //&lt;-Error: member function definitions cannot use the private keyword!</code></pre>
-<h2 id="static-member-functions">Static Member Functions</h2>
+<h2 data-number="5.4" id="static-member-functions"><span
+class="header-section-number">5.4</span> Static Member Functions</h2>
 <p>As was discussed earlier, static private member functions are also
 implementation details and do not belong in the class definition. We can
 define static private extension member functions by using the
@@ -540,7 +553,8 @@ private static int Foo::b() { return 42; } //&lt;-PSEMF
 int Foo::sf() { return b(); }</code></pre>
 <p>The <code>static</code> keyword may appear before or after
 <code>private</code>.</p>
-<h2 id="internal-linkage">Internal Linkage</h2>
+<h2 data-number="5.5" id="internal-linkage"><span
+class="header-section-number">5.5</span> Internal Linkage</h2>
 <p>Both PEM and PSEMF will have internal linkage by default, i.e., they
 are local to one translation unit. This is because almost all private
 extension methods are likely to be used only within one translation unit
@@ -551,7 +565,8 @@ calls and completely remove the function body from the compiled
 binary.</p>
 <p>We allow for a future extension to support PEM or PSEMF with external
 linkage, described under “Alternatives and additions”.</p>
-<h2 id="class-templates-and-pems">Class Templates and PEMs</h2>
+<h2 data-number="5.6" id="class-templates-and-pems"><span
+class="header-section-number">5.6</span> Class Templates and PEMs</h2>
 <p>Class templates are supported in the natural way and do not require
 any special rules or caveats.</p>
 <pre><code>template &lt;typename T&gt;
@@ -623,7 +638,8 @@ template class X&lt;double&gt;;/* Will instantiate the following:
                           * X&lt;double&gt;::b();
                           * X&lt;double&gt;::a();
                           */</code></pre>
-<h2 id="other-properties-of-pems">Other properties of PEMs</h2>
+<h2 data-number="5.7" id="other-properties-of-pems"><span
+class="header-section-number">5.7</span> Other properties of PEMs</h2>
 <p>For completeness, in addition to what is already discussed, private
 extension methods will have the following properties:</p>
 <ul>
@@ -646,7 +662,8 @@ as when the private method was declared inside the class.</li>
 <li>Adding <code>inline</code> to a private extension method is, as
 usual, a directive for the compiler to expand the function inline.</li>
 </ul>
-<h1 id="technical-summary">Technical Summary</h1>
+<h1 data-number="6" id="technical-summary"><span
+class="header-section-number">6</span> Technical Summary</h1>
 <p>In summary, this proposal makes the following changes to the
 standard:</p>
 <ul>
@@ -658,9 +675,11 @@ methods will have private access control and internal linkage.</li>
 <code>private</code> keyword to declare a private static extension
 member function.</li>
 </ul>
-<h1 id="counter-arguments">Counter Arguments</h1>
+<h1 data-number="7" id="counter-arguments"><span
+class="header-section-number">7</span> Counter Arguments</h1>
 <p>We will now address some arguments against this proposal.</p>
-<h2 id="violating-access-control">Violating Access Control</h2>
+<h2 data-number="7.1" id="violating-access-control"><span
+class="header-section-number">7.1</span> Violating Access Control</h2>
 <p>One immediate and common objection to this proposal is that it may
 break encapsulation by allowing the programmer to subvert access
 control. By definition, a PEM has private access control and thus they
@@ -703,13 +722,16 @@ to abuse access control and write poor interfaces. Indeed, many methods
 of violating access control already exist within the current language
 [<a href="GotW076">GotW076</a>]. We agree with the author of that
 article.</p>
-<p>“The issue here is of protecting against Murphy vs. protecting
-against Machiavelli… that is, protecting against accidental misuse
-(which the language does very well) vs. protecting against deliberate
-abuse (which is effectively impossible). In the end, if a programmer
-wants badly enough to subvert the system, he’ll find a way,” [<a
+<blockquote>
+<p>The issue here is of protecting against Murphy vs. protecting against
+Machiavelli… that is, protecting against accidental misuse (which the
+language does very well) vs. protecting against deliberate abuse (which
+is effectively impossible). In the end, if a programmer wants badly
+enough to subvert the system, he’ll find a way, [<a
 href="GotW076">GotW076</a>].</p>
-<h2 id="there-are-already-current-workarounds">There are already current
+</blockquote>
+<h2 data-number="7.2" id="there-are-already-current-workarounds"><span
+class="header-section-number">7.2</span> There are already current
 workarounds</h2>
 <p>Likely the most compelling argument against the proposal is that
 there are already a set of current workarounds:</p>
@@ -783,7 +805,8 @@ feature would be more accessible to new users.</li>
 <li>The fact that this technique was discovered shows a need for PEMs in
 the community.</li>
 </ul>
-<h1 id="alternatives-and-additions">Alternatives and Additions</h1>
+<h1 data-number="8" id="alternatives-and-additions"><span
+class="header-section-number">8</span> Alternatives and Additions</h1>
 <p>The current approach uses the private keyword to declare a PEM or
 PSEMF. What are the consequences of this syntax?</p>
 <p>Pros:</p>
@@ -802,7 +825,8 @@ alternatives.</p>
 <p>As an interesting side note: the authors of the original 2013
 proposal and the 2026 proposal came independently with the exact same
 syntax and solution for private extension methods.</p>
-<h2 id="use-a-different-keyword">Use a different keyword</h2>
+<h2 data-number="8.1" id="use-a-different-keyword"><span
+class="header-section-number">8.1</span> Use a different keyword</h2>
 <p>We could use a keyword other than private. Here are some possible
 candidates, we believe them all to be inferior to private.</p>
 <ul>
@@ -820,7 +844,8 @@ New keywords are something that should only be introduced if there is a
 really good reason. This is a small proposal that does not merit a new
 keyword.</li>
 </ul>
-<h2 id="remove-the-keyword">Remove the keyword</h2>
+<h2 data-number="8.2" id="remove-the-keyword"><span
+class="header-section-number">8.2</span> Remove the keyword</h2>
 <p>Another approach is to avoid the use of a keyword entirely.</p>
 <pre><code>class Foo {};
 
@@ -839,7 +864,8 @@ would get a compiler error. Now he will silently declare a new private
 extension method. This error is likely to be caught during link time
 however.</li>
 </ul>
-<h2 id="reopening-the-class-scope">Reopening the class scope</h2>
+<h2 data-number="8.3" id="reopening-the-class-scope"><span
+class="header-section-number">8.3</span> Reopening the class scope</h2>
 <p>One possible addition to this proposal would be to allow reopening
 the class private scope to add not only new member functions but also
 typedefs and nested types. This is somewhat reminiscent of the style of
@@ -875,7 +901,44 @@ namespace {
      /* stuff */
    };
 };</code></pre>
-<h2 id="allowing-external-linkage">Allowing external linkage</h2>
+<p>A downside of this is that the use of an anonymous namespace for what
+often will be the common pattern is verbose. It is also inconsistent to
+declare the class in two different namespaces.</p>
+<h2 data-number="8.4"
+id="explicitly-enabling-private-extension-methods"><span
+class="header-section-number">8.4</span> Explicitly enabling private
+extension methods</h2>
+<p>The issue of introducing an access loophole can be mitigated by
+requiring the class to be marked in some way. A possible syntax for this
+could be similar to the idea of reopening the class, where
+<code>public</code> in front of the class starts the definition of a
+class that allows extending, and <code>private</code> is used to extend
+it:</p>
+<pre><code>public class Foo {
+  int a;
+}
+
+private class Foo {
+  void SetA(); //&lt;-PEM
+}</code></pre>
+<p>Whereas this would be an error:</p>
+<pre><code>class Foo { //&lt;-No `public` before class: class not marked as extendable
+  int a;
+}
+
+private class Foo { //&lt;-Error: reopening a class not marked as extendable
+  void SetA();
+}</code></pre>
+<p>This would solve the newly created loophole, where access can be
+gainted to the private data of a class that is not meant to be accessed.
+As mentioned before, the private access is not for hiding secrets but is
+to protect against accidentally breaking the invariant of the class. For
+that, explicit marking seems to overdo it.</p>
+<p>Another argument against this approach is that requiring a class to
+be marked to allow extension is the wrong default setting: protecting a
+class against extension seems hardly ever relevant.</p>
+<h2 data-number="8.5" id="allowing-external-linkage"><span
+class="header-section-number">8.5</span> Allowing external linkage</h2>
 <p>In this proposal, we focus only on PEMs and PSEMF with internal
 linkage, because this covers most of the use-cases. A future extension
 could allow external linkage, which would allow declaring extensions
@@ -883,7 +946,7 @@ that are used by different translation units, to support the case in
 which the implementation of a class is spread over multiple translation
 units.</p>
 <p>We could use the <code>extern</code> keyword to denote external
-linkage. We also avoid the need for anonymous namespaces.</p>
+linkage.</p>
 <p>The syntax for this idea might look like the following:</p>
 <pre><code>class Foo {};
 
@@ -897,7 +960,8 @@ static private void Foo::f3();
 // PSEMF with external linkage
 extern private static void Foo::f4();
 extern static private void Foo::f4();</code></pre>
-<h2 id="use-static-for-internal-linkage">Use <code>static</code> for
+<h2 data-number="8.6" id="use-static-for-internal-linkage"><span
+class="header-section-number">8.6</span> Use <code>static</code> for
 internal linkage</h2>
 <p>The 2013 version of this proposal made PEM and PSEMF have external
 leakage, and used the keyword <code>static</code> at a specific place
@@ -915,8 +979,9 @@ static private static void Foo::f4(); //&lt;-PSEMF with internal linkage</code><
 <p>In the discussions on the mailing list around 2013 and in the
 discussions in 2026, there was a preference to use internal linkage by
 default.</p>
-<h1 id="changes-compared-to-the-2013-proposal">Changes compared to the
-2013 proposal</h1>
+<h1 data-number="9" id="changes-compared-to-the-2013-proposal"><span
+class="header-section-number">9</span> Changes compared to the 2013
+proposal</h1>
 <p>The high level changes between this proposal and the 2013 proposal
 are:</p>
 <ul>
@@ -931,10 +996,12 @@ lack of progression are known.)</li>
 <li>Some new arguments for and against that were mentioned on the std
 proposal mailing list have been incorporated.</li>
 </ul>
-<h1 id="acknowledgements">Acknowledgements</h1>
+<h1 data-number="10" id="acknowledgements"><span
+class="header-section-number">10</span> Acknowledgements</h1>
 <p>Thank you to everyone on the std proposals forum for feedback and
 suggestions.</p>
-<h1 id="references">References</h1>
+<h1 data-number="11" id="references"><span
+class="header-section-number">11</span> References</h1>
 <ul>
 <li><a name="Lakos01"></a>[Lakos01] Lakos, John. <em>Large-Scale C++
 Software Design</em>, Addison-Wesley, July 1996, ISBN 0201633620.</li>
