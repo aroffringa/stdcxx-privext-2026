@@ -78,15 +78,15 @@ Non-virtual private member functions and private static member functions are not
 of the interface, because the direct users and child classes cannot
 call private member functions, and so they not need to see their signatures,
 much less know of their existence.
-The compiler also does not need to aware of the private
+The compiler also does not need to be aware of the private
 member functions signatures until they are called. On all major platforms, changing
 the non-virtual private member functions (which are not called by inline functions)
 does not affect the ABI of the class itself
 \[[KDEABI](#KDEABI)\].
 
 We conclude that non-virtual private member function and private static member function
-declarations are not a part of the class interface and thus should not
-be required in the class definition.
+declarations are neither a part of the class interface nor influence the ABI of the
+class, and thus should not be required in the class definition.
 
 Practical Concerns
 ---------------------
@@ -99,8 +99,8 @@ declarations in the class definition.
     signature, all users of the class *must* recompile. Large C++ applications
     already have prohibitively long compilation times. Waiting for compilation
     wastes a lot of programmer time and reduces productivity.
-    Whole books such as \[[Lakos01](#Lakos01)\] have been written
-    with large sections dedicated to techniques for reducing compile times.
+    Books such as \[[Lakos01](#Lakos01)\] have large sections dedicated to
+    techniques for reducing compile times.
     Long compilation time in C++ is a big problem that needs to be addressed.
     This proposal is one major step in the reduction of programmer
     time wasted waiting for compilation during development.
@@ -119,7 +119,10 @@ declarations in the class definition.
     used in private member function signatures, even if those private member functions
     are only called within one translation unit. This artificially 
     restricts the programmer from passing and returning internally linked
-    symbols to and from their private member functions. Internal linkage is
+    symbols to and from their private member functions. Moreover, the private
+    member functions themselves are often good candidates for internal linkage,
+    but this is currently not possible. 
+    Internal linkage is
     another good technique for reducing the set of symbols exported by
     a binary and can also enable compiler optimizations.
 * Some classes may have multiple implementations which can be swapped
@@ -135,7 +138,7 @@ Problem Solution
 ------------
 
 We propose that private non-virtual
-member functions and private static member functions with should be able to be declared outside
+member functions and private static member functions should be able to be declared outside
 of the class definition, with internal linkage.
 Not only does this change not break encapsulation, it actually improves
 encapsulation because unessessary implementation details are being removed from the interface.
@@ -164,26 +167,26 @@ PEMF and PSEMFs have internal linkage.
 Declaring private extension member functions
 ----------------------------
 
-In order to declare a PEMF, we simply declare
+In order to declare a private extension member functions, we declare
 a new class member function outside of the class definition 
 and prefix it with the `private` keyword:
 
-foo.hh
+Header file:
 
     class Foo {
       public:
         int pubf(); //<-public member function
       private:
-        int i_;
+        int i;
 
         int privf(); //<-private member function
     };
 
-foo.cc
+Implementation:
 
     // Private extension member function
     private void Foo::priv_extf() {
-      i_++;
+      i++;
     }
 
     // Definition of pubf(). Calls our extension member function.
@@ -194,7 +197,7 @@ foo.cc
 
     // Definition of privf()
     int Foo::privf() {
-       return i_ * 2;
+       return i * 2;
     }
 
 Private extension constructors and assignment
@@ -304,15 +307,17 @@ and the definition.
 Internal Linkage
 --------------------------
 
-Both PEMF and PSEMF will have internal linkage by default, i.e., they are local to one
-translation unit. This is because almost all private extension member functions are
-likely to be used only within one translation unit (TU). 
-Symbols used within only one TU can be given internal linkage. This reduces the number of symbols
-in the entire application and allows more aggressive optimizations. For example, the compiler can
-inline all calls and completely remove the function body from the compiled binary.
+Private extension member functions (static and non-static) will have internal
+linkage by default, i.e., they are local to one translation unit. This is
+because almost all private extension member functions are likely to be used
+only within one translation unit (TU). 
+Symbols used within only one TU can be given internal linkage. This reduces
+the number of symbols in the entire application and allows more aggressive
+optimizations. For example, the compiler can inline all calls and completely
+remove the function body from the compiled binary.
 
-We allow for a future extension to support PEMF or PSEMF with external linkage,
-described under "Alternatives and additions".
+We allow for a future extension to support private extension member functions
+with external linkage, described under "Alternatives and additions".
 
 Class Templates and PEMFs
 --------------------
