@@ -718,7 +718,7 @@ all class features that are not part of the interface and do not influence the
 ABI are extensible, instead of only one category of features. While consistency
 can be a valid argument, we note though that this 'rule' still would have a
 highly specific and detailed effect, and it complicates the language more than
-just the addition of private static data members.
+just the addition of private static members function.
 
 We propose therefore to only allow extension of private static data members.
 
