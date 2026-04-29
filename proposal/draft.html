@@ -12,7 +12,7 @@
     }
     body {
       margin: 0 auto;
-      max-width: 65%;
+      max-width:  65%;
       padding-left: 50px;
       padding-right: 50px;
       padding-top: 50px;
@@ -233,9 +233,9 @@ control. This proposal does not address any aspects of the friend
 feature.</p>
 <p>Non-virtual private member functions and private static member
 functions are not part of the interface, because the direct users and
-child classes cannot call private member functions, and so they not need
-to see their signatures, much less know of their existence. The compiler
-also does not need to be aware of the private member functions
+child classes cannot call private member functions, and so they do not
+need to see their signatures, much less know of their existence. The
+compiler also does not need to be aware of the private member functions
 signatures until they are called. On all major platforms, changing the
 non-virtual private member functions (which are not called by inline
 functions) does not affect the ABI of the class itself [<a
@@ -246,7 +246,7 @@ interface nor influence the ABI of the class, and thus should not be
 required in the class definition.</p>
 <h2 data-number="4.2" id="practical-concerns"><span
 class="header-section-number">4.2</span> Practical Concerns</h2>
-<p>High level discussions about encapsulation aside, there are some very
+<p>High-level discussions about encapsulation aside, there are some very
 real practical problems that arise from requiring private member
 function declarations in the class definition.</p>
 <ul>
@@ -260,7 +260,7 @@ for reducing compile times. Long compilation time in C++ is a big
 problem that needs to be addressed. This proposal is one major step in
 the reduction of programmer time wasted waiting for compilation during
 development.</li>
-<li>Unnessessary dependencies are introduced into the class header file.
+<li>Unnecessary dependencies are introduced into the class header file.
 All of the symbols used in private member function signatures must be
 exposed to the clients of the class. This matters for shared libraries
 where we wish to minimize symbol dependencies to optimize library load
@@ -303,7 +303,7 @@ arbitrarily. We are not proposing or even endorsing any form of mixin
 here. Adding, removing, or changing private member functions does not
 change the interface of the class.</p>
 <h1 data-number="5" id="high-level-description"><span
-class="header-section-number">5</span> High Level Description</h1>
+class="header-section-number">5</span> High-Level Description</h1>
 <p>The basic idea behind this proposal is simple: Just allow the
 programmer to declare additional class non-virtual private member
 functions and private static member functions which are not present in
@@ -321,26 +321,24 @@ it with the <code>private</code> keyword:</p>
 <p>Header file:</p>
 <pre><code>class Foo {
   public:
-    int pubf(); //&lt;-public member function
+    int PublicFunction();
   private:
     int i;
 
-    int privf(); //&lt;-private member function
+    int PrivateFunction();
 };</code></pre>
 <p>Implementation:</p>
 <pre><code>// Private extension member function
-private void Foo::priv_extf() {
+private void Foo::PEMF() {
   i++;
 }
 
-// Definition of pubf(). Calls our extension member function.
-int Foo::pubf() {
-  priv_extf();
-  return privf();
+int Foo::PublicFunction() {
+  PEMF();
+  return PrivateFunction();
 }
 
-// Definition of privf()
-int Foo::privf() {
+int Foo::PrivateFunction() {
    return i * 2;
 }</code></pre>
 <h2 data-number="5.2"
@@ -385,7 +383,7 @@ otherwise a compiler error will ensue. Likewise any member function
 definition which has been previously declared in the class definition
 must not be prefixed by the <code>private</code> keyword. For this
 reason, all class member function declarations will require the class
-definition to been previously seen.</p>
+definition to have been previously seen.</p>
 <p>The following are compilation errors:</p>
 <pre><code>private void Foo::p1(); //&lt;-Error: class definition not visible here!
 
@@ -427,7 +425,7 @@ in the definition:</p>
 <p>Implementation:</p>
 <pre><code>private void Foo::PrivateFunction();
 
-void FooPublicFunction() {
+void Foo::PublicFunction() {
   PrivateFunction();
 }
 
@@ -816,7 +814,7 @@ private Foo { //&lt;-Reopen Foo&#39;s private scope
   friend class Gaz; //&lt;-Error: Cannot declare extended friends: this breaks encapsulation.
 };
 
-private static Foo { //&lt;-Ropen Foo&#39;s private scope again, this time with internal linkage
+private static Foo { //&lt;-Reopen Foo&#39;s private scope again, this time with internal linkage
   /* stuff */
 };
 
@@ -829,29 +827,34 @@ namespace {
 often will be the common pattern is verbose. It is also inconsistent to
 declare the class in two different namespaces.</p>
 <h2 data-number="8.4"
-id="private-static-data-members-and-private-aliases"><span
-class="header-section-number">8.4</span> Private static data members and
-private aliases</h2>
-<p>Private static data members and private aliases are, like private
-member functions, not part of the class interface and do not change the
-ABI of the class.</p>
+id="extending-other-types-of-private-fields-of-a-class"><span
+class="header-section-number">8.4</span> Extending other types of
+private fields of a class</h2>
+<p>The following class fields are, like private member functions, also
+not part of the class interface and do not change the ABI of the
+class:</p>
+<ul>
+<li>Private static data members</li>
+<li>Private aliases</li>
+<li>Private nested classes</li>
+</ul>
 <p>One may wonder why we would then allow extension of a class with
-private member functions but not with private aliases or private static
-data members. The reason is that private extension member functions
-solve a genuine problem with practical consequences (discussed in the
-motivation), whereas there are simple alternatives for private aliases
-and private static member data. Both of these can be moved more local to
-the intended place of use with minimal effort and without exposing the
-dependencies of these into the header file. In general, such
-extensibility would have much less use.</p>
-<p>As a consequence, adding private aliases or private static data
-members would mostly be to have some sort of consistency in the
-language: all class features that are not part of the interface and do
-not influence the ABI are extensible, instead of only one category of
-features. While consistency can be a valid argument, we note though that
-this ‘rule’ still would have a highly specific and detailed effect, and
-it complicates the language more than just the addition of private
-static data members.</p>
+private member functions but not these other types of class fields. The
+reason is that private extension member functions solve a genuine
+problem with practical consequences (discussed in the motivation),
+whereas there are simple alternatives for private aliases, private
+static member data and private nested classes. Both of these can be
+moved more local to the intended place of use with minimal effort and
+without exposing the dependencies of these into the header file. In
+general, such extensibility would have much less use.</p>
+<p>As a consequence, being able to extend a class with private aliases,
+private static data or private nested classes would mostly be to have
+consistency in the language: all class features that are not part of the
+interface and do not influence the ABI are extensible, instead of only
+one category of features. While consistency can be a valid argument,
+allowing the extension of all these fields would have a highly specific
+and detailed effect, and it complicates the language more than when we
+allow just the addition of private static members function.</p>
 <p>We propose therefore to only allow extension of private static data
 members.</p>
 <h2 data-number="8.5"
@@ -859,11 +862,12 @@ id="explicitly-enabling-private-extension-member-functions"><span
 class="header-section-number">8.5</span> Explicitly enabling private
 extension member functions</h2>
 <p>The issue of introducing an access loophole can be mitigated by
-requiring the class to be marked in some way. A possible syntax for this
-could be similar to the idea of reopening the class, where
+requiring the extended class to be marked in some way. A possible syntax
+for this could be similar to the idea of reopening the class, where
 <code>public</code> in front of the class starts the definition of a
 class that allows extending, and <code>private</code> is used to extend
-it:</p>
+it. Declaring a class without <code>public</code> or
+<code>private</code> means the class is not extendable. For example:</p>
 <pre><code>public class Foo {
   int a;
 }
@@ -872,7 +876,7 @@ private class Foo {
   void SetA(); //&lt;-PEMF
 }</code></pre>
 <p>Whereas this would be an error:</p>
-<pre><code>class Foo { //&lt;-No `public` before class: class not marked as extendable
+<pre><code>class Foo {
   int a;
 }
 
@@ -880,7 +884,7 @@ private class Foo { //&lt;-Error: reopening a class not marked as extendable
   void SetA();
 }</code></pre>
 <p>This would solve the newly created loophole, where access can be
-gainted to the private data of a class that is not meant to be accessed.
+gained to the private data of a class that is not meant to be accessed.
 As mentioned before, the private access is not for hiding secrets but is
 to protect against accidentally breaking the invariant of the class. For
 that, explicit marking seems to overdo it.</p>
@@ -932,19 +936,23 @@ default.</p>
 <h1 data-number="9" id="changes-compared-to-the-2013-proposal"><span
 class="header-section-number">9</span> Changes compared to the 2013
 proposal</h1>
-<p>The high level changes between this proposal and the 2013 proposal
+<p>The high-level changes between this proposal and the 2013 proposal
 [<a href="#N3863">N3863</a>] are:</p>
 <ul>
-<li>This proposal uses internal linkage by default. The 2013 proposal
-offered this as an alternative. The use of the <code>static</code>
-keyword was simplified for this reason.</li>
+<li>This proposal uses internal linkage by default for private extension
+member functions. The 2013 proposal offered this as an alternative, but
+not as default. Making internal linkage the default simplified the use
+of the <code>static</code> keyword and is considered a default that is
+more often the desired default.</li>
 <li>References to modules were removed from the proposal. In 2013, a
 counter argument was that modules may solve this issue, which now no
 longer holds. The at that time upcoming modules proposal might have been
 a reason why the proposal didn’t progress (No explicit reasons for the
 lack of progression are known.)</li>
 <li>Some new arguments for and against that were mentioned on the std
-proposal mailing list have been incorporated.</li>
+proposal mailing list have been incorporated, and with the help of
+discussions on the mailing list, many sections were added or extended
+with details.</li>
 </ul>
 <h1 data-number="10" id="acknowledgements"><span
 class="header-section-number">10</span> Acknowledgements</h1>
