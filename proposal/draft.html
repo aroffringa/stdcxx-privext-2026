@@ -1,14 +1,11 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
 <head>
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>draft</title>
+  <title>C++ standard proposal: Private extension methods</title>
   <style>
-    /* Default styles provided by pandoc.
-    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-    */
     html {
       color: #1a1a1a;
       background-color: #fdfdfd;
@@ -63,10 +60,6 @@
     img {
       max-width: 100%;
     }
-    svg {
-      height: auto;
-      max-width: 100%;
-    }
     h1, h2, h3, h4, h5, h6 {
       margin-top: 1.4em;
     }
@@ -91,7 +84,6 @@
       color: #606060;
     }
     code {
-      white-space: pre-wrap;
       font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
       font-size: 85%;
       margin: 0;
@@ -111,8 +103,8 @@
      overflow: visible;
     }
     hr {
+      background-color: #1a1a1a;
       border: none;
-      border-top: 1px solid #1a1a1a;
       height: 1px;
       margin: 1em 0;
     }
@@ -155,6 +147,7 @@
     #TOC a:not(:hover) {
       text-decoration: none;
     }
+    code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
     div.column{flex: auto; overflow-x: auto;}
@@ -172,22 +165,29 @@
   </style>
 </head>
 <body>
+<header id="title-block-header">
+<h1 class="title">C++ standard proposal: Private extension methods</h1>
+</header>
 <h1 data-number="1" id="private-extension-methods"><span
 class="header-section-number">1</span> Private Extension Methods</h1>
 <ul>
 <li>Document Number: -</li>
-<li>Date: 2026-04-28</li>
+<li>Date: 2026-04-29</li>
 <li>Programming Language C++</li>
 <li>Reply-to: André Offringa <a href="mailto:offringa@gmail.com"
 class="email">offringa@gmail.com</a></li>
+<li>Audience: WG21</li>
 </ul>
 <h1 data-number="2" id="introduction"><span
 class="header-section-number">2</span> Introduction</h1>
 <p>This proposal adds a new mechanism for declaring non-virtual private
 class methods and static private class methods outside of the class
 definition, with internal linkage.</p>
-<p>It is based on an earlier proposal from 2013 by Matthew Fioravante.
-Large parts of his text were reused, following the MIT license.</p>
+<p>It is based on an earlier proposal from 2013 by Matthew Fioravante
+[<a href="#N3863">N3863</a>] [<a href="#Proposal2013">Proposal2013</a>].
+Large parts of his text were reused, following the MIT license. See the
+<a href="https://github.com/aroffringa/stdcxx-privext-2026">git
+repository</a> for the license.</p>
 <h1 data-number="3" id="impact-on-the-standard"><span
 class="header-section-number">3</span> Impact on the standard</h1>
 <p>This proposal is a core language extension. It does not require any
@@ -210,188 +210,33 @@ changed without affecting the users of the interface.</p>
 id="analysis-of-the-quality-of-encapsulation-enabled-by-the-c-class-model"><span
 class="header-section-number">4.1</span> Analysis of the quality of
 encapsulation enabled by the C++ class model</h2>
-<p>We will perform an analysis of encapsulation provided by the C++
-class mechanism. In C++, a system interface can take the form of a class
-definition. This class definition is normally written in a header file,
-in order to allow its use in multiple translation units. In order to
-maximize encapsulation, we must minimize the number of class details in
-the interface to the bare minimum required by the users of the
-class.</p>
-<p>The following table lists all of the aspects that make up a class. It
-lists whether or not they are required to be in the class definition.
-The next 2 columns describe how each aspect is used by the programmer
-using the class directly and the child class inheriting from it. The
-last column describes when the compiler needs the aspect to be visible
-in order to implement the language.</p>
-<table style="width:100%;">
-<colgroup>
-<col style="width: 3%" />
-<col style="width: 34%" />
-<col style="width: 18%" />
-<col style="width: 4%" />
-<col style="width: 13%" />
-<col style="width: 25%" />
-</colgroup>
-<thead>
-<tr>
-<th>#</th>
-<th>Aspect</th>
-<th>Required in class def.?</th>
-<th>User</th>
-<th>Inheritor</th>
-<th>Compiler</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Public data member definitions</td>
-<td>Y</td>
-<td>use</td>
-<td>use</td>
-<td>sizeof(), method definitions</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Protected data member definitions</td>
-<td>Y</td>
-<td></td>
-<td>use</td>
-<td>sizeof(), method definitions</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Private data member definitions</td>
-<td>Y</td>
-<td></td>
-<td></td>
-<td>sizeof(), method definitions</td>
-</tr>
-<tr>
-<td>4</td>
-<td>Public virtual method declarations</td>
-<td>Y</td>
-<td>call</td>
-<td>override, call</td>
-<td>vtable</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Protected virtual method declarations</td>
-<td>Y</td>
-<td></td>
-<td>override, call</td>
-<td>vtable</td>
-</tr>
-<tr>
-<td>6</td>
-<td>Private virtual method declarations</td>
-<td>Y</td>
-<td></td>
-<td>override</td>
-<td>vtable</td>
-</tr>
-<tr>
-<td>7</td>
-<td>Public non-virtual method declarations</td>
-<td>Y</td>
-<td>call</td>
-<td>call</td>
-<td>only at call site</td>
-</tr>
-<tr>
-<td>8</td>
-<td>Protected non-virtual method declarations</td>
-<td>Y</td>
-<td></td>
-<td>call</td>
-<td>only at call site</td>
-</tr>
-<tr>
-<td>9</td>
-<td>Private non-virtual method declarations</td>
-<td>Y</td>
-<td></td>
-<td></td>
-<td>only at call site</td>
-</tr>
-<tr>
-<td>10</td>
-<td>Public static method declarations</td>
-<td>Y</td>
-<td>call</td>
-<td>call</td>
-<td>only at call site</td>
-</tr>
-<tr>
-<td>11</td>
-<td>Protected static method declarations</td>
-<td>Y</td>
-<td></td>
-<td>call</td>
-<td>only at call site</td>
-</tr>
-<tr>
-<td>12</td>
-<td>Private static method declarations</td>
-<td>Y</td>
-<td></td>
-<td></td>
-<td>only at call site</td>
-</tr>
-<tr>
-<td>13</td>
-<td>friend declarations</td>
-<td>Y</td>
-<td></td>
-<td></td>
-<td>only at friend definition</td>
-</tr>
-<tr>
-<td>14</td>
-<td>All member function definitions</td>
-<td>N</td>
-<td></td>
-<td></td>
-<td>only for inlining</td>
-</tr>
-</tbody>
-</table>
-<p>Let us examine this table and try to deconstruct which aspects
-required in the class definition are actually part of the class
-interface and which are implementation details. First, the public and
-protected aspects must be a part of the interface because they are
-directly exposed to class user and the child class who inherits. Private
-virtual methods are also part of the interface to the child class
-because the child class may choose to override them.</p>
-<p>Now we are left with the following:</p>
-<ul>
-<li>Private data member definitions</li>
-<li>Friend declarations</li>
-<li>Private non-virtual method declarations</li>
-<li>Private static method declarations</li>
-</ul>
+<p>In C++, a system interface can take the form of a class definition.
+This class definition is normally written in a header file, in order to
+allow its use in multiple translation units. In order to maximize
+encapsulation, we must minimize the number of class details in the
+interface to the bare minimum required by the users of the class.</p>
+<p>With this idea, the public and protected aspects must be a part of
+the interface because they are directly exposed to the class user or
+child classes. Private virtual methods are also part of the interface to
+the child class because the child class may choose to override them.</p>
 <p>Private data members are not technically part of the interface as
-they cannot be accessed by users or child classes. Here we run into
-practical considerations. The compiler needs to know the size of the
-entire object in order to create instances of it. The size cannot be
-computed without seeing all of the data members, regardless of access
-control. Developers who wish to increase encapsulation by hiding the
-private data members can use the PIMPL idiom at the expense of run time
-efficiency.</p>
+they cannot be accessed by users or child classes. However, the compiler
+needs to know the size of the entire object in order to create instances
+of it. The size cannot be computed without seeing all of the data
+members, regardless of access control.</p>
 <p>Friend declarations also are not technically part of the interface.
 However, allowing friend declarations to be declared anywhere would make
 it very easy for users to abuse friends in order to break access
 control. This proposal does not address any aspects of the friend
-feature and we will not speak of it again.</p>
-<p>The leaves us with the non-virtual private methods and static private
-methods. The direct users and child classes cannot call private methods
-so they do not need to see their signatures, much less know of their
-existence. The compiler also does not need to aware of the private
-methods signatures until they are called. On all major platforms,
-changing the non-virtual private methods (which are not called by inline
-functions) does not affect the ABI of the class itself [<a
-href="#KDEABI">KDEABI</a>].</p>
+feature.</p>
+<p>Non-virtual private methods and static private methods are not part
+of the interface, because the direct users and child classes cannot call
+private methods, and so they not need to see their signatures, much less
+know of their existence. The compiler also does not need to aware of the
+private methods signatures until they are called. On all major
+platforms, changing the non-virtual private methods (which are not
+called by inline functions) does not affect the ABI of the class itself
+[<a href="#KDEABI">KDEABI</a>].</p>
 <p>We conclude that non-virtual private method and private static member
 function declarations are not a part of the class interface and thus
 should not be required in the class definition.</p>
@@ -409,8 +254,7 @@ productivity. Whole books such as [<a href="#Lakos01">Lakos01</a>] have
 been written with large sections dedicated to techniques for reducing
 compile times. Long compilation time in C++ is a big problem that needs
 to be addressed. This proposal is one major step in the reduction of
-programmer time wasted waiting for compilation during development. Of
-all of the issues given here, this one is the most dire.</li>
+programmer time wasted waiting for compilation during development.</li>
 <li>Unnessessary dependencies are introduced into the class header file.
 All of the symbols used in private method signatures must be exposed to
 the clients of the class. This matters for shared libraries where we
@@ -433,7 +277,7 @@ out at compile time. One example is a cross platform file IO library
 such as iostream. It is not unreasonable to expect each platform to
 require a different set of private method signatures to implement its
 behavior. Because these signatures are required to be in the definition,
-we are then forced to also include all of the messy conditional
+we are then forced to also include all of the complex conditional
 compilation details into the header files.</li>
 </ul>
 <h2 data-number="4.3" id="problem-solution"><span
@@ -805,6 +649,30 @@ feature would be more accessible to new users.</li>
 <li>The fact that this technique was discovered shows a need for PEMs in
 the community.</li>
 </ul>
+<h2 data-number="7.3" id="odr-pitfalls"><span
+class="header-section-number">7.3</span> ODR pitfalls</h2>
+<p>Because private class methods are proposed to be no longer all
+declared in the class scope, this proposal adds new ways of violating
+the ODR. On possible way is by the instantiation of a template class
+with and without a private extension method defined:</p>
+<p>Header:</p>
+<pre><code>template&lt;typename T&gt;
+class Foo {
+public:
+  Foo() {
+    A(T()); // dependent lookup, overload resolved at instantiation
+  }
+
+private:
+  void A(double) {}
+  // void A(int); -&gt; not declared, extended later
+}
+
+// If Foo instantiated here → A(int) does not participate</code></pre>
+<p>Implementation:</p>
+<pre><code>private void Foo::A(int) {}
+
+// If Foo instantiated here → A(int) does participate</code></pre>
 <h1 data-number="8" id="alternatives-and-additions"><span
 class="header-section-number">8</span> Alternatives and Additions</h1>
 <p>The current approach uses the private keyword to declare a PEM or
@@ -844,8 +712,9 @@ New keywords are something that should only be introduced if there is a
 really good reason. This is a small proposal that does not merit a new
 keyword.</li>
 </ul>
-<h2 data-number="8.2" id="remove-the-keyword"><span
-class="header-section-number">8.2</span> Remove the keyword</h2>
+<h2 data-number="8.2" id="extend-a-class-without-private-keyword"><span
+class="header-section-number">8.2</span> Extend a class without
+<code>private</code> keyword</h2>
 <p>Another approach is to avoid the use of a keyword entirely.</p>
 <pre><code>class Foo {};
 
@@ -964,8 +833,8 @@ extern static private void Foo::f4();</code></pre>
 class="header-section-number">8.6</span> Use <code>static</code> for
 internal linkage</h2>
 <p>The 2013 version of this proposal made PEM and PSEMF have external
-leakage, and used the keyword <code>static</code> at a specific place
-(before <code>private</code>) to specify internal leakage.</p>
+linkage, and used the keyword <code>static</code> at a specific place
+(before <code>private</code>) to specify internal linkage.</p>
 <p>The downside of this method is that the word static has two different
 functions within the same line of code, and its meaning depends on its
 position:</p>
@@ -983,9 +852,9 @@ default.</p>
 class="header-section-number">9</span> Changes compared to the 2013
 proposal</h1>
 <p>The high level changes between this proposal and the 2013 proposal
-are:</p>
+[<a href="#N3863">N3863</a>] are:</p>
 <ul>
-<li>This proposal uses internal leakage by default. The 2013 proposal
+<li>This proposal uses internal linkage by default. The 2013 proposal
 offered this as an alternative. The use of the <code>static</code>
 keyword was simplified for this reason.</li>
 <li>References to modules were removed from the proposal. In 2013, a
@@ -1003,15 +872,22 @@ suggestions.</p>
 <h1 data-number="11" id="references"><span
 class="header-section-number">11</span> References</h1>
 <ul>
+<li><a name="Proposal2013"></a>[Proposal2013] stdcxx-privext Git
+repository of M. Fioravante, <a
+href="https://github.com/mateofio/stdcxx-privext"
+class="uri">https://github.com/mateofio/stdcxx-privext</a>.</li>
+<li><a name="N3863"></a>[N3863] M. Fioravante, Private Extension
+Methods, open-std.org <a
+href="https://open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3863.html"
+class="uri">https://open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3863.html</a>.</li>
 <li><a name="Lakos01"></a>[Lakos01] Lakos, John. <em>Large-Scale C++
 Software Design</em>, Addison-Wesley, July 1996, ISBN 0201633620.</li>
 <li><a name="KDEABI"></a>[KDEABI] <em>Policies/Binary Compatibility
-Issues With C++ - KDE TechBase</em>, Available online at <a
+Issues With C++ - KDE TechBase</em>, <a
 href="http://techbase.kde.org/Policies/Binary_Compatibility_Issues_With_C++"
 class="uri">http://techbase.kde.org/Policies/Binary_Compatibility_Issues_With_C++</a>.</li>
 <li><a name="GotW076"></a>[Gotw076] Sutter, Herb. <em>GotW #76: Uses and
-Abuses of Access Rights</em>, Available online at <a
-href="http://www.gotw.ca/gotw/076.htm"
+Abuses of Access Rights</em>, <a href="http://www.gotw.ca/gotw/076.htm"
 class="uri">http://www.gotw.ca/gotw/076.htm</a>.</li>
 </ul>
 </body>

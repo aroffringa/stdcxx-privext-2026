@@ -6,9 +6,10 @@ Private Extension Methods
 ==========================================
 
 * Document Number: -
-* Date: 2026-04-28
+* Date: 2026-04-29
 * Programming Language C++
 * Reply-to: André Offringa <offringa@gmail.com>
+* Audience: WG21
 
 Introduction
 =============================
@@ -17,8 +18,11 @@ This proposal adds a new mechanism for declaring non-virtual
 private class methods and static private class methods outside of the
 class definition, with internal linkage.
 
-It is based on an earlier proposal from 2013 by Matthew Fioravante.
-Large parts of his text were reused, following the MIT license.
+It is based on an earlier proposal from 2013 by Matthew Fioravante
+\[[N3863](#N3863)\] \[[Proposal2013](#Proposal2013)\].
+Large parts of his text were reused, following the MIT license. See
+the [git repository](https://github.com/aroffringa/stdcxx-privext-2026)
+for the license.
 
 Impact on the standard
 =============================
@@ -44,8 +48,6 @@ be changed without affecting the users of the interface.
 Analysis of the quality of encapsulation enabled by the C++ class model
 --------------------------------
 
-We will perform an analysis of encapsulation provided by the C++
-class mechanism.
 In C++, a system interface can take the form of a class definition.
 This class definition is normally written in a header
 file, in order to allow its use in multiple translation units.
@@ -53,64 +55,29 @@ In order to maximize encapsulation, we must minimize the number
 of class details in the interface to the bare minimum required by
 the users of the class.
 
-The following table lists all of the aspects that make up a class. It
-lists whether or not they are required to be in the class definition.
-The next 2 columns describe how each aspect is used by the programmer
-using the class directly and the child class inheriting from it. The
-last column describes when the compiler needs the aspect to be visible
-in order to implement the language.
-
-| #  | Aspect                                      | Required in class def.? | User | Inheritor        | Compiler                         |
-|----|---------------------------------------------|-------------------------|------|------------------|----------------------------------|
-| 1  | Public data member definitions              | Y                       | use  | use              | sizeof(), method definitions     |
-| 2  | Protected data member definitions           | Y                       |      | use              | sizeof(), method definitions     |
-| 3  | Private data member definitions             | Y                       |      |                  | sizeof(), method definitions     |
-| 4  | Public virtual method declarations          | Y                       | call | override, call   | vtable                           |
-| 5  | Protected virtual method declarations       | Y                       |      | override, call   | vtable                           |
-| 6  | Private virtual method declarations         | Y                       |      | override         | vtable                           |
-| 7  | Public non-virtual method declarations      | Y                       | call | call             | only at call site                |
-| 8  | Protected non-virtual method declarations   | Y                       |      | call             | only at call site                |
-| 9  | Private non-virtual method declarations     | Y                       |      |                  | only at call site                |
-| 10 | Public static method declarations           | Y                       | call | call             | only at call site                |
-| 11 | Protected static method declarations        | Y                       |      | call             | only at call site                |
-| 12 | Private static method declarations          | Y                       |      |                  | only at call site                |
-| 13 | friend declarations                         | Y                       |      |                  | only at friend definition        |
-| 14 | All member function definitions             | N                       |      |                  | only for inlining                |
-
-Let us examine this table and try to deconstruct which aspects
-required in the class definition are actually
-part of the class interface and which are implementation details.
-First, the public and protected aspects must be a part
-of the interface because they are directly exposed to class user and
-the child class who inherits.
+With this idea, the public and protected aspects must be a part
+of the interface because they are directly exposed to the class user or
+child classes.
 Private virtual methods are also part of the interface to the child class
 because the child class may choose to override them.
 
-Now we are left with the following:
-
-* Private data member definitions
-* Friend declarations
-* Private non-virtual method declarations
-* Private static method declarations
-
 Private data members are not technically part of the interface as
 they cannot be accessed by users or child classes.
-Here we run into practical considerations. The compiler needs to know
+However, the compiler needs to know
 the size of the entire object in order to create instances of it.
 The size cannot be computed without seeing all of the data members,
-regardless of access control. Developers who wish to increase encapsulation
-by hiding the private data members can use the PIMPL idiom
-at the expense of run time efficiency.
+regardless of access control.
 
 Friend declarations also are not technically part of the interface.
 However, allowing friend declarations to be declared anywhere would 
 make it very easy for users to abuse friends in order to break access
 control. This proposal does not address any aspects of the
-friend feature and we will not speak of it again.
+friend feature.
 
-The leaves us with the non-virtual private methods and static private methods.
-The direct users and child classes cannot call private methods so they
-do not need to see their signatures, much less know of their existence.
+Non-virtual private methods and static private methods are not part
+of the interface, because the direct users and child classes cannot
+call private methods, and so they not need to see their signatures,
+much less know of their existence.
 The compiler also does not need to aware of the private
 methods signatures until they are called. On all major platforms, changing
 the non-virtual private methods (which are not called by inline functions)
@@ -137,7 +104,6 @@ declarations in the class definition.
     Long compilation time in C++ is a big problem that needs to be addressed.
     This proposal is one major step in the reduction of programmer
     time wasted waiting for compilation during development.
-    Of all of the issues given here, this one is the most dire.
 * Unnessessary dependencies are introduced into the class header file. 
     All of the symbols used in private method signatures must be exposed
     to the clients of the class. This matters for shared libraries
@@ -148,7 +114,8 @@ declarations in the class definition.
     would not need to do at all if the private method signature along
     with all of its symbol dependencies were
     safely encapsulated within the project's internal source files.
-* Symbols with internal linkage (i.e keyword `static` and anonymous namespaces) cannot be
+* Symbols with internal linkage (i.e keyword `static` and anonymous namespaces)
+    cannot be
     used in private method signatures, even if those private methods
     are only called within one translation unit. This artificially 
     restricts the programmer from passing and returning internally linked
@@ -162,7 +129,7 @@ declarations in the class definition.
     signatures to implement its behavior.
     Because these signatures are required to be in the
     definition, we are then forced to also include all of the
-    messy conditional compilation details into the header files.
+    complex conditional compilation details into the header files.
 
 Problem Solution
 ------------
@@ -537,6 +504,36 @@ Practically, this achieves most of the benefits of PEM, but it has some drawback
 * This technique is obscure and not well known, a first class language feature would be more accessible to new users.
 * The fact that this technique was discovered shows a need for PEMs in the community.
 
+ODR pitfalls
+--------------------
+
+Because private class methods are proposed to be no longer all declared
+in the class scope, this proposal adds new ways of violating the ODR. On
+possible way is by the instantiation of a template class with and without
+a private extension method defined:
+
+Header:
+
+    template<typename T>
+    class Foo {
+    public:
+      Foo() {
+        A(T()); // dependent lookup, overload resolved at instantiation
+      }
+
+    private:
+      void A(double) {}
+      // void A(int); -> not declared, extended later
+    }
+
+    // If Foo instantiated here → A(int) does not participate
+
+Implementation:
+
+    private void Foo::A(int) {}
+
+    // If Foo instantiated here → A(int) does participate
+
 Alternatives and Additions
 ===================
 
@@ -583,7 +580,7 @@ Here are some possible candidates, we believe them all to be inferior to private
 
 
 
-Remove the keyword
+Extend a class without `private` keyword
 ------------------------------
 
 Another approach is to avoid the use of a keyword entirely.
@@ -713,9 +710,9 @@ The syntax for this idea might look like the following:
 Use `static` for internal linkage
 ----------------------
 
-The 2013 version of this proposal made PEM and PSEMF have external leakage,
+The 2013 version of this proposal made PEM and PSEMF have external linkage,
 and used the keyword `static` at a specific place (before `private`) to
-specify internal leakage.
+specify internal linkage.
 
 The downside of this method is that the word static has two different
 functions within the same line of code, and its meaning depends on its
@@ -736,9 +733,10 @@ in 2026, there was a preference to use internal linkage by default.
 Changes compared to the 2013 proposal
 ====================
 
-The high level changes between this proposal and the 2013 proposal are:
+The high level changes between this proposal and the 2013 proposal
+\[[N3863](#N3863)\] are:
 
-- This proposal uses internal leakage by default. The 2013 proposal offered
+- This proposal uses internal linkage by default. The 2013 proposal offered
   this as an alternative. The use of the `static` keyword was simplified
   for this reason.
 - References to modules were removed from the proposal. In 2013, a counter
@@ -756,7 +754,9 @@ Thank you to everyone on the std proposals forum for feedback and suggestions.
 
 References
 ==================
+* <a name="Proposal2013"></a>[Proposal2013] stdcxx-privext Git repository of M. Fioravante, <https://github.com/mateofio/stdcxx-privext>.
+* <a name="N3863"></a>[N3863] M. Fioravante, Private Extension Methods, open-std.org <https://open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3863.html>.
 * <a name="Lakos01"></a>[Lakos01] Lakos, John. *Large-Scale C++ Software Design*, Addison-Wesley, July 1996, ISBN 0201633620.
-* <a name="KDEABI"></a>[KDEABI] *Policies/Binary Compatibility Issues With C++ - KDE TechBase*, Available online at <http://techbase.kde.org/Policies/Binary_Compatibility_Issues_With_C++>.
-* <a name="GotW076"></a>[Gotw076] Sutter, Herb. *GotW #76: Uses and Abuses of Access Rights*, Available online at <http://www.gotw.ca/gotw/076.htm>.
+* <a name="KDEABI"></a>[KDEABI] *Policies/Binary Compatibility Issues With C++ - KDE TechBase*, <http://techbase.kde.org/Policies/Binary_Compatibility_Issues_With_C++>.
+* <a name="GotW076"></a>[Gotw076] Sutter, Herb. *GotW #76: Uses and Abuses of Access Rights*, <http://www.gotw.ca/gotw/076.htm>.
 
