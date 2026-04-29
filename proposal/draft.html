@@ -494,8 +494,8 @@ definition.</li>
 methods, including <code>const</code>/<code>volatile</code> qualifiers,
 ref-qualification, exception specification, attributes and trailing
 return type.</li>
-<li>The parameter list may include an explicit this parameter to deduce
-this.</li>
+<li>The parameter list may include an explicit <code>this</code>
+parameter to deduce <code>this</code>.</li>
 <li>Overloading member functions by their parameter list is
 allowed.</li>
 <li>Operator overloading using private extension methods is
@@ -664,15 +664,22 @@ public:
   }
 
 private:
-  void A(double) {}
-  // void A(int); -&gt; not declared, extended later
+  int A(double) {
+    return 1;
+  }
+  // int A(int); -&gt; not declared, extended later
 }
 
-// If Foo instantiated here → A(int) does not participate</code></pre>
+struct X {
+  Foo&lt;int&gt; f; // If Foo instantiated here → A(int) does not participate
+};</code></pre>
 <p>Implementation:</p>
-<pre><code>private void Foo::A(int) {}
+<pre><code>template&lt;typename T&gt;
+private int Foo&lt;T&gt;::A(double) {}
 
-// If Foo instantiated here → A(int) does participate</code></pre>
+struct Y {
+  Foo&lt;int&gt; f; // Foo instantiated here → A(int) does participate
+};</code></pre>
 <h1 data-number="8" id="alternatives-and-additions"><span
 class="header-section-number">8</span> Alternatives and Additions</h1>
 <p>The current approach uses the private keyword to declare a PEM or
