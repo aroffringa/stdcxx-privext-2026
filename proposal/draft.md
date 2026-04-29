@@ -213,17 +213,23 @@ We can also declare additional private constructors:
     // Public constructor delegates to the private extension constructor
     Foo::Foo() : Foo(0, 0) {}
 
-Note that we cannot declare private extension default constructors, copy constructors, copy assignment,
-move constructor, move assignment, or destructors. All of the following are errors:
+We do not allow private extension default constructors, copy constructors, copy assignment,
+move constructor, move assignment, or destructors. We do not allow these, because allowing
+these would produce complicated situations. The compiler will for example generate
+a default constructor when no user-defined constructor is declared inside the class. If a
+private extension constructor is later defined, a complicated situation arises, with
+somewhat of a trivial way to violate the one-definition rule.
+
+In summary, all of the following are errors:
 
     class Foo {};
 
-    private Foo::Foo(); //Error: Cannot declare a PEMF default constructor!
-    private Foo::Foo(const Foo&); //Error: Cannot declare a PEMF copy constructor!
-    private Foo& Foo::operator=(const Foo&); //Error: Cannot declare a PEMF copy assignment operator!
-    private Foo::Foo(Foo&&); //Error: Cannot declare a PEMF move constructor!
-    private Foo& Foo::operator=(Foo&&); //Error: Cannot declare a PEMF move assignment operator!
-    private Foo::~Foo(); //Error: Cannot declare a PEMF destructor!
+    private Foo::Foo(); //Error: Cannot declare a PEMF default constructor
+    private Foo::Foo(const Foo&); //Error: Cannot declare a PEMF copy constructor
+    private Foo& Foo::operator=(const Foo&); //Error: Cannot declare a PEMF copy assignment operator
+    private Foo::Foo(Foo&&); //Error: Cannot declare a PEMF move constructor
+    private Foo& Foo::operator=(Foo&&); //Error: Cannot declare a PEMF move assignment operator
+    private Foo::~Foo(); //Error: Cannot declare a PEMF destructor
 
 Class definition visibility and the private keyword
 ----------------------
