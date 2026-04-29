@@ -15,7 +15,7 @@ Introduction
 =============================
 
 This proposal adds a new mechanism for declaring non-virtual 
-private class member functions and static private class member functions outside of the
+private class member functions and private static class member functions outside of the
 class definition, with internal linkage.
 
 It is based on an earlier proposal from 2013 by Matthew Fioravante
@@ -74,7 +74,7 @@ make it very easy for users to abuse friends in order to break access
 control. This proposal does not address any aspects of the
 friend feature.
 
-Non-virtual private member functions and static private member functions are not part
+Non-virtual private member functions and private static member functions are not part
 of the interface, because the direct users and child classes cannot
 call private member functions, and so they not need to see their signatures,
 much less know of their existence.
@@ -154,7 +154,7 @@ High Level Description
 
 The basic idea behind this proposal is simple: Just allow the
 programmer to declare additional class non-virtual private member functions
-and static private member functions
+and private static member functions
 which are not present in the class definition. We call these additional
 class member functions *private extension member functions (PEMF)*  and
 *private static extension member functions (PSEMF)*.
@@ -207,10 +207,10 @@ We can also declare additional private constructors:
         Foo();
     };
 
-    //PEMF constructor
+    // PEMF constructor
     private Foo::Foo(int i, int j) : i_(i), j_(j) {}
 
-    //Public constructor delegates to the private extension constructor
+    // Public constructor delegates to the private extension constructor
     Foo::Foo() : Foo(0, 0) {}
 
 Note that we cannot declare private extension default constructors, copy constructors, copy assignment,
@@ -249,9 +249,9 @@ The following are compilation errors:
 Static Member Functions
 -------------------------------
 
-As was discussed earlier, static private member functions are also 
+As was discussed earlier, private static member functions are also 
 implementation details and do not belong in the class definition.
-We can define static private extension member functions by using the `static`
+We can define private static extension member functions by using the `static`
 keyword together with the `private` keyword:
 
     class Foo {
@@ -265,6 +265,35 @@ keyword together with the `private` keyword:
     int Foo::sf() { return b(); }
 
 The `static` keyword may appear before or after `private`.
+
+Forward declaring private extension member functions
+--------------------------
+
+Private extension member functions can be forward declared. The keyword
+`private` is used both in the forward declaration and in the definition:
+
+Header file:
+
+    struct Foo {
+      PublicFunction();
+    };
+
+Implementation:
+    
+    private void Foo::PrivateFunction();
+    
+    void FooPublicFunction() {
+      PrivateFunction();
+    }
+    
+    private void Foo::PrivateFunction() {
+      // Implementation
+    }
+
+This allows for a more flexible ordering of the functions. This copies
+the behaviour of static free functions, which can also be forward declared.
+In that scenario, the `static` keyword is also used in both the declaration
+and the definition.
 
 Internal Linkage
 --------------------------
@@ -315,7 +344,7 @@ of a class template which calls free function templates.
       /* stuff */
     }
 
-    //templated f() calls both a() and b()
+    // templated f() calls both a() and b()
     template <typename T>
     private void X<T>::pubf() {
       a();
@@ -637,7 +666,7 @@ and Vicente J. Botet Escriba for the handy syntax using private.
       friend class Gaz; //<-Error: Cannot declare extended friends: this breaks encapsulation.
     };
 
-    static private Foo { //<-Ropen Foo's private scope again, this time with internal linkage
+    private static Foo { //<-Ropen Foo's private scope again, this time with internal linkage
       /* stuff */
     };
 
@@ -650,6 +679,33 @@ and Vicente J. Botet Escriba for the handy syntax using private.
 A downside of this is that the use of an anonymous namespace for what often
 will be the common pattern is verbose. It is also inconsistent to declare the
 class in two different namespaces.
+
+Private static data members and private aliases
+----------------------
+
+Private static data members and private aliases are, like private member
+functions, not part of the class interface and do not change the ABI of the
+class.
+
+One may wonder why we would then allow extension of a class with
+private member functions but not with private aliases or private static data
+members. The reason is that private extension member functions solve a
+genuine problem with practical consequences (discussed in the motivation),
+whereas there are simple alternatives for private aliases and private static
+member data. Both of these can be moved more local to the intended
+place of use with minimal effort and without exposing the dependencies of
+these into the header file. In general, such extensibility would have much
+less use.
+
+As a consequence, adding private aliases or private static data
+members would mostly be to have some sort of consistency in the language:
+all class features that are not part of the interface and do not influence the
+ABI are extensible, instead of only one category of features. While consistency
+can be a valid argument, we note though that this 'rule' still would have a
+highly specific and detailed effect, and it complicates the language more than
+just the addition of private static data members.
+
+We propose therefore to only allow extension of private static data members.
 
 Explicitly enabling private extension member functions
 ----------------------

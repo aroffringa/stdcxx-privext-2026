@@ -168,8 +168,9 @@
 <header id="title-block-header">
 <h1 class="title">C++ standard proposal: Private extension methods</h1>
 </header>
-<h1 data-number="1" id="private-extension-methods"><span
-class="header-section-number">1</span> Private Extension Methods</h1>
+<h1 data-number="1" id="private-extension-member-functions"><span
+class="header-section-number">1</span> Private Extension Member
+Functions</h1>
 <ul>
 <li>Document Number: -</li>
 <li>Date: 2026-04-29</li>
@@ -181,8 +182,8 @@ class="email">offringa@gmail.com</a></li>
 <h1 data-number="2" id="introduction"><span
 class="header-section-number">2</span> Introduction</h1>
 <p>This proposal adds a new mechanism for declaring non-virtual private
-class methods and static private class methods outside of the class
-definition, with internal linkage.</p>
+class member functions and private static class member functions outside
+of the class definition, with internal linkage.</p>
 <p>It is based on an earlier proposal from 2013 by Matthew Fioravante
 [<a href="#N3863">N3863</a>] [<a href="#Proposal2013">Proposal2013</a>].
 Large parts of his text were reused, following the MIT license. See the
@@ -217,8 +218,9 @@ encapsulation, we must minimize the number of class details in the
 interface to the bare minimum required by the users of the class.</p>
 <p>With this idea, the public and protected aspects must be a part of
 the interface because they are directly exposed to the class user or
-child classes. Private virtual methods are also part of the interface to
-the child class because the child class may choose to override them.</p>
+child classes. Private virtual member functions are also part of the
+interface to the child class because the child class may choose to
+override them.</p>
 <p>Private data members are not technically part of the interface as
 they cannot be accessed by users or child classes. However, the compiler
 needs to know the size of the entire object in order to create instances
@@ -229,84 +231,88 @@ However, allowing friend declarations to be declared anywhere would make
 it very easy for users to abuse friends in order to break access
 control. This proposal does not address any aspects of the friend
 feature.</p>
-<p>Non-virtual private methods and static private methods are not part
-of the interface, because the direct users and child classes cannot call
-private methods, and so they not need to see their signatures, much less
-know of their existence. The compiler also does not need to aware of the
-private methods signatures until they are called. On all major
-platforms, changing the non-virtual private methods (which are not
-called by inline functions) does not affect the ABI of the class itself
-[<a href="#KDEABI">KDEABI</a>].</p>
-<p>We conclude that non-virtual private method and private static member
-function declarations are not a part of the class interface and thus
-should not be required in the class definition.</p>
+<p>Non-virtual private member functions and private static member
+functions are not part of the interface, because the direct users and
+child classes cannot call private member functions, and so they not need
+to see their signatures, much less know of their existence. The compiler
+also does not need to aware of the private member functions signatures
+until they are called. On all major platforms, changing the non-virtual
+private member functions (which are not called by inline functions) does
+not affect the ABI of the class itself [<a
+href="#KDEABI">KDEABI</a>].</p>
+<p>We conclude that non-virtual private member function and private
+static member function declarations are not a part of the class
+interface and thus should not be required in the class definition.</p>
 <h2 data-number="4.2" id="practical-concerns"><span
 class="header-section-number">4.2</span> Practical Concerns</h2>
 <p>High level discussions about encapsulation aside, there are some very
-real practical problems that arise from requiring private method
-declarations in the class definition.</p>
+real practical problems that arise from requiring private member
+function declarations in the class definition.</p>
 <ul>
 <li>Whenever the class developer adds, removes, or modifies a private
-method signature, all users of the class <em>must</em> recompile. Large
-C++ applications already have prohibitively long compilation times.
-Waiting for compilation wastes a lot of programmer time and reduces
-productivity. Whole books such as [<a href="#Lakos01">Lakos01</a>] have
-been written with large sections dedicated to techniques for reducing
-compile times. Long compilation time in C++ is a big problem that needs
-to be addressed. This proposal is one major step in the reduction of
-programmer time wasted waiting for compilation during development.</li>
+member function signature, all users of the class <em>must</em>
+recompile. Large C++ applications already have prohibitively long
+compilation times. Waiting for compilation wastes a lot of programmer
+time and reduces productivity. Whole books such as [<a
+href="#Lakos01">Lakos01</a>] have been written with large sections
+dedicated to techniques for reducing compile times. Long compilation
+time in C++ is a big problem that needs to be addressed. This proposal
+is one major step in the reduction of programmer time wasted waiting for
+compilation during development.</li>
 <li>Unnessessary dependencies are introduced into the class header file.
-All of the symbols used in private method signatures must be exposed to
-the clients of the class. This matters for shared libraries where we
-wish to minimize symbol dependencies to optimize library load time and
-avoid symbol name clashes. While some platform dependent techniques such
-as visibility control can be used to mitigate the symbol pollution, this
-requires extra work from the programmer which he would not need to do at
-all if the private method signature along with all of its symbol
-dependencies were safely encapsulated within the project’s internal
-source files.</li>
+All of the symbols used in private member function signatures must be
+exposed to the clients of the class. This matters for shared libraries
+where we wish to minimize symbol dependencies to optimize library load
+time and avoid symbol name clashes. While some platform dependent
+techniques such as visibility control can be used to mitigate the symbol
+pollution, this requires extra work from the programmer which he would
+not need to do at all if the private member function signature along
+with all of its symbol dependencies were safely encapsulated within the
+project’s internal source files.</li>
 <li>Symbols with internal linkage (i.e keyword <code>static</code> and
-anonymous namespaces) cannot be used in private method signatures, even
-if those private methods are only called within one translation unit.
-This artificially restricts the programmer from passing and returning
-internally linked symbols to and from their private methods. Internal
-linkage is another good technique for reducing the set of symbols
-exported by a binary and can also enable compiler optimizations.</li>
+anonymous namespaces) cannot be used in private member function
+signatures, even if those private member functions are only called
+within one translation unit. This artificially restricts the programmer
+from passing and returning internally linked symbols to and from their
+private member functions. Internal linkage is another good technique for
+reducing the set of symbols exported by a binary and can also enable
+compiler optimizations.</li>
 <li>Some classes may have multiple implementations which can be swapped
 out at compile time. One example is a cross platform file IO library
 such as iostream. It is not unreasonable to expect each platform to
-require a different set of private method signatures to implement its
-behavior. Because these signatures are required to be in the definition,
-we are then forced to also include all of the complex conditional
-compilation details into the header files.</li>
+require a different set of private member function signatures to
+implement its behavior. Because these signatures are required to be in
+the definition, we are then forced to also include all of the complex
+conditional compilation details into the header files.</li>
 </ul>
 <h2 data-number="4.3" id="problem-solution"><span
 class="header-section-number">4.3</span> Problem Solution</h2>
-<p>We propose that private non-virtual methods and private static
-methods with should be able to be declared outside of the class
-definition, with internal linkage. Not only does this change not break
-encapsulation, it actually improves encapsulation because unessessary
-implementation details are being removed from the interface. Unlike
-PIMPL or other related encapsulation techniques, this new feature has no
-run time overhead.</p>
+<p>We propose that private non-virtual member functions and private
+static member functions with should be able to be declared outside of
+the class definition, with internal linkage. Not only does this change
+not break encapsulation, it actually improves encapsulation because
+unessessary implementation details are being removed from the interface.
+Unlike PIMPL or other related encapsulation techniques, this new feature
+has no run time overhead.</p>
 <p>As a side note, some programming languages provide a mixin feature
 which allows programmers to reopen a class and extend its interface
 arbitrarily. We are not proposing or even endorsing any form of mixin
-here. Adding, removing, or changing private methods does not change the
-interface of the class.</p>
+here. Adding, removing, or changing private member functions does not
+change the interface of the class.</p>
 <h1 data-number="5" id="high-level-description"><span
 class="header-section-number">5</span> High Level Description</h1>
 <p>The basic idea behind this proposal is simple: Just allow the
-programmer to declare additional class non-virtual private methods and
-static private methods which are not present in the class definition. We
-call these additional class methods <em>private extension methods
-(PEM)</em> and <em>private static extension member functions
-(PSEMF)</em>.</p>
-<p>PEM and PSEMFs have internal linkage.</p>
-<h2 data-number="5.1" id="declaring-private-extension-methods"><span
+programmer to declare additional class non-virtual private member
+functions and private static member functions which are not present in
+the class definition. We call these additional class member functions
+<em>private extension member functions (PEMF)</em> and <em>private
+static extension member functions (PSEMF)</em>.</p>
+<p>PEMF and PSEMFs have internal linkage.</p>
+<h2 data-number="5.1"
+id="declaring-private-extension-member-functions"><span
 class="header-section-number">5.1</span> Declaring private extension
-methods</h2>
-<p>In order to declare a PEM, we simply declare a new class member
+member functions</h2>
+<p>In order to declare a PEMF, we simply declare a new class member
 function outside of the class definition and prefix it with the
 <code>private</code> keyword:</p>
 <p>foo.hh</p>
@@ -319,12 +325,12 @@ function outside of the class definition and prefix it with the
     int privf(); //&lt;-private member function
 };</code></pre>
 <p>foo.cc</p>
-<pre><code>// Private extension method
+<pre><code>// Private extension member function
 private void Foo::priv_extf() {
   i_++;
 }
 
-// Definition of pubf(). Calls our extension method.
+// Definition of pubf(). Calls our extension member function.
 int Foo::pubf() {
   priv_extf();
   return privf();
@@ -343,33 +349,33 @@ constructors</h2>
     Foo();
 };
 
-//PEM constructor
+// PEMF constructor
 private Foo::Foo(int i, int j) : i_(i), j_(j) {}
 
-//Public constructor delegates to the private extension constructor
+// Public constructor delegates to the private extension constructor
 Foo::Foo() : Foo(0, 0) {}</code></pre>
 <p>Note that we cannot declare private extension default constructors,
 copy constructors, copy assignment, move constructor, move assignment,
 or destructors. All of the following are errors:</p>
 <pre><code>class Foo {};
 
-private Foo::Foo(); //Error: Cannot declare a PEM default constructor!
-private Foo::Foo(const Foo&amp;); //Error: Cannot declare a PEM copy constructor!
-private Foo&amp; Foo::operator=(const Foo&amp;); //Error: Cannot declare a PEM copy assignment operator!
-private Foo::Foo(Foo&amp;&amp;); //Error: Cannot declare a PEM move constructor!
-private Foo&amp; Foo::operator=(Foo&amp;&amp;); //Error: Cannot declare a PEM move assignment operator!
-private Foo::~Foo(); //Error: Cannot declare a PEM destructor!</code></pre>
+private Foo::Foo(); //Error: Cannot declare a PEMF default constructor!
+private Foo::Foo(const Foo&amp;); //Error: Cannot declare a PEMF copy constructor!
+private Foo&amp; Foo::operator=(const Foo&amp;); //Error: Cannot declare a PEMF copy assignment operator!
+private Foo::Foo(Foo&amp;&amp;); //Error: Cannot declare a PEMF move constructor!
+private Foo&amp; Foo::operator=(Foo&amp;&amp;); //Error: Cannot declare a PEMF move assignment operator!
+private Foo::~Foo(); //Error: Cannot declare a PEMF destructor!</code></pre>
 <h2 data-number="5.3"
 id="class-definition-visibility-and-the-private-keyword"><span
 class="header-section-number">5.3</span> Class definition visibility and
 the private keyword</h2>
-<p>Any class method which has been declared but not found in the class
-definition requires the <code>private</code> keyword, otherwise a
-compiler error will ensue. Likewise any method definition which has been
-previously declared in the class definition must not be prefixed by the
-<code>private</code> keyword. For this reason, all class method
-declarations will require the class definition to been previously
-seen.</p>
+<p>Any class member function which has been declared but not found in
+the class definition requires the <code>private</code> keyword,
+otherwise a compiler error will ensue. Likewise any member function
+definition which has been previously declared in the class definition
+must not be prefixed by the <code>private</code> keyword. For this
+reason, all class member function declarations will require the class
+definition to been previously seen.</p>
 <p>The following are compilation errors:</p>
 <pre><code>private void Foo::p1(); //&lt;-Error: class definition not visible here!
 
@@ -377,13 +383,13 @@ class Foo {
   void p2();
 };
 
-void Foo::p3(); //&lt;-Error: PEMs must use the private keyword!
+void Foo::p3(); //&lt;-Error: PEMFs must use the private keyword!
 private void Foo::p2() {} //&lt;-Error: member function definitions cannot use the private keyword!</code></pre>
 <h2 data-number="5.4" id="static-member-functions"><span
 class="header-section-number">5.4</span> Static Member Functions</h2>
-<p>As was discussed earlier, static private member functions are also
+<p>As was discussed earlier, private static member functions are also
 implementation details and do not belong in the class definition. We can
-define static private extension member functions by using the
+define private static extension member functions by using the
 <code>static</code> keyword together with the <code>private</code>
 keyword:</p>
 <pre><code>class Foo {
@@ -391,39 +397,64 @@ keyword:</p>
     static int sf();
 };
 
-private void Foo::a(); //&lt;-PEM
+private void Foo::a(); //&lt;-PEMF
 
 private static int Foo::b() { return 42; } //&lt;-PSEMF
 int Foo::sf() { return b(); }</code></pre>
 <p>The <code>static</code> keyword may appear before or after
 <code>private</code>.</p>
-<h2 data-number="5.5" id="internal-linkage"><span
-class="header-section-number">5.5</span> Internal Linkage</h2>
-<p>Both PEM and PSEMF will have internal linkage by default, i.e., they
+<h2 data-number="5.5"
+id="forward-declaring-private-extension-member-functions"><span
+class="header-section-number">5.5</span> Forward declaring private
+extension member functions</h2>
+<p>Private extension member functions can be forward declared. The
+keyword <code>private</code> is used both in the forward declaration and
+in the definition:</p>
+<p>Header file:</p>
+<pre><code>struct Foo {
+  PublicFunction();
+};</code></pre>
+<p>Implementation:</p>
+<pre><code>private void Foo::PrivateFunction();
+
+void FooPublicFunction() {
+  PrivateFunction();
+}
+
+private void Foo::PrivateFunction() {
+  // Implementation
+}</code></pre>
+<p>This allows for a more flexible ordering of the functions. This
+copies the behaviour of static free functions, which can also be forward
+declared. In that scenario, the <code>static</code> keyword is also used
+in both the declaration and the definition.</p>
+<h2 data-number="5.6" id="internal-linkage"><span
+class="header-section-number">5.6</span> Internal Linkage</h2>
+<p>Both PEMF and PSEMF will have internal linkage by default, i.e., they
 are local to one translation unit. This is because almost all private
-extension methods are likely to be used only within one translation unit
-(TU). Symbols used within only one TU can be given internal linkage.
-This reduces the number of symbols in the entire application and allows
-more aggressive optimizations. For example, the compiler can inline all
-calls and completely remove the function body from the compiled
-binary.</p>
-<p>We allow for a future extension to support PEM or PSEMF with external
-linkage, described under “Alternatives and additions”.</p>
-<h2 data-number="5.6" id="class-templates-and-pems"><span
-class="header-section-number">5.6</span> Class Templates and PEMs</h2>
+extension member functions are likely to be used only within one
+translation unit (TU). Symbols used within only one TU can be given
+internal linkage. This reduces the number of symbols in the entire
+application and allows more aggressive optimizations. For example, the
+compiler can inline all calls and completely remove the function body
+from the compiled binary.</p>
+<p>We allow for a future extension to support PEMF or PSEMF with
+external linkage, described under “Alternatives and additions”.</p>
+<h2 data-number="5.7" id="class-templates-and-pemfs"><span
+class="header-section-number">5.7</span> Class Templates and PEMFs</h2>
 <p>Class templates are supported in the natural way and do not require
 any special rules or caveats.</p>
 <pre><code>template &lt;typename T&gt;
 class X {};
 
 template &lt;typename T&gt;
-private void X&lt;T&gt;::f1(); //&lt;-PEM for class template X
+private void X&lt;T&gt;::f1(); //&lt;-PEMF for class template X
 
 template &lt;&gt;
-private void X&lt;int&gt;::f2(); //&lt;-Specialization of PEM for X&lt;int&gt;</code></pre>
+private void X&lt;int&gt;::f2(); //&lt;-Specialization of PEMF for X&lt;int&gt;</code></pre>
 <p>Explicit instantiation of a class template will instantiate all of
-its member functions. This will recursively instantiate only the PEMs
-(and additional PEMs called by these, in a recursive manner) called by
+its member functions. This will recursively instantiate only the PEMFs
+(and additional PEMFs called by these, in a recursive manner) called by
 those member functions. This procedure follows the same rules as
 explicit instantiation of a class template which calls free function
 templates.</p>
@@ -434,16 +465,16 @@ class X {
 };
 
 template &lt;typename T&gt;
-private void X&lt;T&gt;::a() { //&lt;-PEM for class template
+private void X&lt;T&gt;::a() { //&lt;-PEMF for class template
   /* stuff */
 }
 
 template &lt;typename T&gt;
-private void X&lt;T&gt;::b() { //&lt;-PEM for class template
+private void X&lt;T&gt;::b() { //&lt;-PEMF for class template
   /* stuff */
 }
 
-//templated f() calls both a() and b()
+// templated f() calls both a() and b()
 template &lt;typename T&gt;
 private void X&lt;T&gt;::pubf() {
   a();
@@ -482,39 +513,42 @@ template class X&lt;double&gt;;/* Will instantiate the following:
                           * X&lt;double&gt;::b();
                           * X&lt;double&gt;::a();
                           */</code></pre>
-<h2 data-number="5.7" id="other-properties-of-pems"><span
-class="header-section-number">5.7</span> Other properties of PEMs</h2>
+<h2 data-number="5.8" id="other-properties-of-pemfs"><span
+class="header-section-number">5.8</span> Other properties of PEMFs</h2>
 <p>For completeness, in addition to what is already discussed, private
-extension methods will have the following properties:</p>
+extension member functions will have the following properties:</p>
 <ul>
-<li>After defining a PEM or PSEMF, they participate in method look-up as
-if they were declared as a private method inside the class
+<li>After defining a PEMF or PSEMF, they participate in member look-up
+as if they were declared as a private member function inside the class
 definition.</li>
-<li>Private extension methods support the same qualifiers as normal
-methods, including <code>const</code>/<code>volatile</code> qualifiers,
-ref-qualification, exception specification, attributes and trailing
-return type.</li>
+<li>Private extension member functions support the same qualifiers as
+normal member functions, including
+<code>const</code>/<code>volatile</code> qualifiers, ref-qualification,
+exception specification, attributes and trailing return type.</li>
 <li>The parameter list may include an explicit <code>this</code>
 parameter to deduce <code>this</code>.</li>
 <li>Overloading member functions by their parameter list is
 allowed.</li>
-<li>Operator overloading using private extension methods is
+<li>Operator overloading using private extension member functions is
 allowed.</li>
-<li>Declaring a PEM with the same name as a base class method causes the
-base class method name to be hidden, from that point on, in the same way
-as when the private method was declared inside the class.</li>
-<li>Adding <code>inline</code> to a private extension method is, as
-usual, a directive for the compiler to expand the function inline.</li>
+<li>Declaring a PEMF with the same name as a base class member function
+causes the base class member function name to be hidden, from that point
+on, in the same way as when the private member function was declared
+inside the class.</li>
+<li>Adding <code>inline</code> to a private extension member function
+is, as usual, a directive for the compiler to expand the function
+inline.</li>
 </ul>
 <h1 data-number="6" id="technical-summary"><span
 class="header-section-number">6</span> Technical Summary</h1>
 <p>In summary, this proposal makes the following changes to the
 standard:</p>
 <ul>
-<li>Allow the programmer to declare additional class methods outside of
-the class definition. These so called <em>private extension method</em>
-declarations must be prefixed by the <code>private</code> keyword. These
-methods will have private access control and internal linkage.</li>
+<li>Allow the programmer to declare additional class member functions
+outside of the class definition. These so called <em>private extension
+member function</em> declarations must be prefixed by the
+<code>private</code> keyword. These member functions will have private
+access control and internal linkage.</li>
 <li>The programmer may combine the <code>static</code> keyword with the
 <code>private</code> keyword to declare a private static extension
 member function.</li>
@@ -526,11 +560,11 @@ class="header-section-number">7</span> Counter Arguments</h1>
 class="header-section-number">7.1</span> Violating Access Control</h2>
 <p>One immediate and common objection to this proposal is that it may
 break encapsulation by allowing the programmer to subvert access
-control. By definition, a PEM has private access control and thus they
+control. By definition, a PEMF has private access control and thus they
 cannot be called outside of the class scope. There is however, one
 exploit discovered by Richard Smith where merely the existence of an
-additional class method which is never called allows a violation of
-access control.</p>
+additional class member function which is never called allows a
+violation of access control.</p>
 <pre><code>class A {
   int n;
 public:
@@ -562,10 +596,10 @@ violate access control if this proposal were to be accepted.</p>
 <p>This is not actually a problem. This example is artificially
 contrived to exploit access control. It is not a common error that would
 be made by novice programmers nor is it an obvious or easy to use tool
-to abuse access control and write poor interfaces. Indeed, many methods
-of violating access control already exist within the current language
-[<a href="GotW076">GotW076</a>]. We agree with the author of that
-article.</p>
+to abuse access control and write poor interfaces. Indeed, many member
+functions of violating access control already exist within the current
+language [<a href="GotW076">GotW076</a>]. We agree with the author of
+that article.</p>
 <blockquote>
 <p>The issue here is of protecting against Murphy vs. protecting against
 Machiavelli… that is, protecting against accidental misuse (which the
@@ -580,12 +614,12 @@ workarounds</h2>
 <p>Likely the most compelling argument against the proposal is that
 there are already a set of current workarounds:</p>
 <ul>
-<li>Nested classes can be used to implement a partial variant of PEM in
+<li>Nested classes can be used to implement a partial variant of PEMF in
 the current language.</li>
 <li>Friend functions can be used to implement functions that access the
 private data of the class. These can have internal storage. The symbols
 do however clutter the interface of the class, and it adds dependencies
-types used in the signature of the method.</li>
+types used in the signature of the member function.</li>
 <li>A friend class declaration can be used to avoid listing the
 functions in the class interface, and avoids a dependency on types used
 in the function signatures. These can however not have internal
@@ -609,7 +643,7 @@ definition. An example is provided.</p>
 };</code></pre>
 <p>Private implementation:</p>
 <pre><code>struct X::XHelper {
-  static void doWorkHelper(X&amp; x) { //&lt;-PEM
+  static void doWorkHelper(X&amp; x) { //&lt;-PEMF
     x.i_ = 42;
   }
 
@@ -617,7 +651,7 @@ definition. An example is provided.</p>
 };
 
 struct X::XHelper::XHelper2 {
-  static void doMoreWorkHelper(X&amp; x) { //&lt;-PEM
+  static void doMoreWorkHelper(X&amp; x) { //&lt;-PEMF
     x.i_++;
   }
 };
@@ -626,35 +660,35 @@ void X::doWork() {
   XHelper::doWorkHelper(*this);
   XHelper::XHelper2::doMoreWorkHelper(*this);
 }</code></pre>
-<p>Practically, this achieves most of the benefits of PEM, but it has
+<p>Practically, this achieves most of the benefits of PEMF, but it has
 some drawbacks:</p>
 <ul>
 <li>We still leak the <code>XHelper</code> symbol (implementation) to
 the header file (interface).</li>
-<li>All of the PEMs implemented by the helper cannot access the data
+<li>All of the PEMFs implemented by the helper cannot access the data
 members of X directly. They must use C style syntax
 <code>x.i_ = 42</code> instead of the more natural <code>i_ = 42</code>
 provided by the implicit <code>this</code> pointer.</li>
-<li>The set of PEMs are restricted to the class definition of
-<code>XHelper</code>. We cannot arbitrarily introduce new PEMS without
+<li>The set of PEMFs are restricted to the class definition of
+<code>XHelper</code>. We cannot arbitrarily introduce new PEMFS without
 modifying <code>XHelper</code> or creating yet another subclass of
 <code>XHelper</code>.</li>
-<li><code>XHelper</code> and all of its methods cannot have internal
-linkage.</li>
+<li><code>XHelper</code> and all of its member functions cannot have
+internal linkage.</li>
 <li><code>XHelper</code> static member function signatures cannot use
 symbols with internal linkage unless <code>XHelper</code> itself resides
 in only one translation unit.</li>
 <li>This technique is obscure and not well known, a first class language
 feature would be more accessible to new users.</li>
-<li>The fact that this technique was discovered shows a need for PEMs in
-the community.</li>
+<li>The fact that this technique was discovered shows a need for PEMFs
+in the community.</li>
 </ul>
 <h2 data-number="7.3" id="odr-pitfalls"><span
 class="header-section-number">7.3</span> ODR pitfalls</h2>
-<p>Because private class methods are proposed to be no longer all
-declared in the class scope, this proposal adds new ways of violating
-the ODR. On possible way is by the instantiation of a template class
-with and without a private extension method defined:</p>
+<p>Because private class member functions are proposed to be no longer
+all declared in the class scope, this proposal adds new ways of
+violating the ODR. On possible way is by the instantiation of a template
+class with and without a private extension member function defined:</p>
 <p>Header:</p>
 <pre><code>template&lt;typename T&gt;
 class Foo {
@@ -682,7 +716,7 @@ struct Y {
 };</code></pre>
 <h1 data-number="8" id="alternatives-and-additions"><span
 class="header-section-number">8</span> Alternatives and Additions</h1>
-<p>The current approach uses the private keyword to declare a PEM or
+<p>The current approach uses the private keyword to declare a PEMF or
 PSEMF. What are the consequences of this syntax?</p>
 <p>Pros:</p>
 <ul>
@@ -693,13 +727,13 @@ PSEMF. What are the consequences of this syntax?</p>
 <p>Cons:</p>
 <ul>
 <li>Novice programmers may ask why they cannot declare public and
-protected extension methods.</li>
+protected extension member functions.</li>
 </ul>
 <p>Might there be a better approach? We will discuss some
 alternatives.</p>
 <p>As an interesting side note: the authors of the original 2013
 proposal and the 2026 proposal came independently with the exact same
-syntax and solution for private extension methods.</p>
+syntax and solution for private extension member functions.</p>
 <h2 data-number="8.1" id="use-a-different-keyword"><span
 class="header-section-number">8.1</span> Use a different keyword</h2>
 <p>We could use a keyword other than private. Here are some possible
@@ -725,20 +759,20 @@ class="header-section-number">8.2</span> Extend a class without
 <p>Another approach is to avoid the use of a keyword entirely.</p>
 <pre><code>class Foo {};
 
-void Foo::f1(); //&lt;-PEM
+void Foo::f1(); //&lt;-PEMF
 static void Foo::f2(); //&lt;-PSEMF</code></pre>
 <p>Pros:</p>
 <ul>
 <li>Completely backwards compatible</li>
-<li>Avoids the confusion private vs public/protected extension
-methods.</li>
+<li>Avoids the confusion private vs public/protected extension member
+functions.</li>
 </ul>
 <p>Cons:</p>
 <ul>
-<li>Previously if the user made a typo when defining a class method, he
-would get a compiler error. Now he will silently declare a new private
-extension method. This error is likely to be caught during link time
-however.</li>
+<li>Previously if the user made a typo when defining a class member
+function, he would get a compiler error. Now he will silently declare a
+new private extension member function. This error is likely to be caught
+during link time however.</li>
 </ul>
 <h2 data-number="8.3" id="reopening-the-class-scope"><span
 class="header-section-number">8.3</span> Reopening the class scope</h2>
@@ -752,7 +786,7 @@ Botet Escriba for the handy syntax using private.</p>
 
 private Foo { //&lt;-Reopen Foo&#39;s private scope
   
-  void f(); //&lt;-PEM
+  void f(); //&lt;-PEMF
   static void g(); //&lt;-PSEMF
 
   int x_; //&lt;-Error: cannot add data members to Foo.
@@ -768,7 +802,7 @@ private Foo { //&lt;-Reopen Foo&#39;s private scope
   friend class Gaz; //&lt;-Error: Cannot declare extended friends: this breaks encapsulation.
 };
 
-static private Foo { //&lt;-Ropen Foo&#39;s private scope again, this time with internal linkage
+private static Foo { //&lt;-Ropen Foo&#39;s private scope again, this time with internal linkage
   /* stuff */
 };
 
@@ -781,9 +815,35 @@ namespace {
 often will be the common pattern is verbose. It is also inconsistent to
 declare the class in two different namespaces.</p>
 <h2 data-number="8.4"
-id="explicitly-enabling-private-extension-methods"><span
-class="header-section-number">8.4</span> Explicitly enabling private
-extension methods</h2>
+id="private-static-data-members-and-private-aliases"><span
+class="header-section-number">8.4</span> Private static data members and
+private aliases</h2>
+<p>Private static data members and private aliases are, like private
+member functions, not part of the class interface and do not change the
+ABI of the class.</p>
+<p>One may wonder why we would then allow extension of a class with
+private member functions but not with private aliases or private static
+data members. The reason is that private extension member functions
+solve a genuine problem with practical consequences (discussed in the
+motivation), whereas there are simple alternatives for private aliases
+and private static member data. Both of these can be moved more local to
+the intended place of use with minimal effort and without exposing the
+dependencies of these into the header file. In general, such
+extensibility would have much less use.</p>
+<p>As a consequence, adding private aliases or private static data
+members would mostly be to have some sort of consistency in the
+language: all class features that are not part of the interface and do
+not influence the ABI are extensible, instead of only one category of
+features. While consistency can be a valid argument, we note though that
+this ‘rule’ still would have a highly specific and detailed effect, and
+it complicates the language more than just the addition of private
+static data members.</p>
+<p>We propose therefore to only allow extension of private static data
+members.</p>
+<h2 data-number="8.5"
+id="explicitly-enabling-private-extension-member-functions"><span
+class="header-section-number">8.5</span> Explicitly enabling private
+extension member functions</h2>
 <p>The issue of introducing an access loophole can be mitigated by
 requiring the class to be marked in some way. A possible syntax for this
 could be similar to the idea of reopening the class, where
@@ -795,7 +855,7 @@ it:</p>
 }
 
 private class Foo {
-  void SetA(); //&lt;-PEM
+  void SetA(); //&lt;-PEMF
 }</code></pre>
 <p>Whereas this would be an error:</p>
 <pre><code>class Foo { //&lt;-No `public` before class: class not marked as extendable
@@ -813,9 +873,9 @@ that, explicit marking seems to overdo it.</p>
 <p>Another argument against this approach is that requiring a class to
 be marked to allow extension is the wrong default setting: protecting a
 class against extension seems hardly ever relevant.</p>
-<h2 data-number="8.5" id="allowing-external-linkage"><span
-class="header-section-number">8.5</span> Allowing external linkage</h2>
-<p>In this proposal, we focus only on PEMs and PSEMF with internal
+<h2 data-number="8.6" id="allowing-external-linkage"><span
+class="header-section-number">8.6</span> Allowing external linkage</h2>
+<p>In this proposal, we focus only on PEMFs and PSEMF with internal
 linkage, because this covers most of the use-cases. A future extension
 could allow external linkage, which would allow declaring extensions
 that are used by different translation units, to support the case in
@@ -826,9 +886,9 @@ linkage.</p>
 <p>The syntax for this idea might look like the following:</p>
 <pre><code>class Foo {};
 
-// PEM with internal linkage
+// PEMF with internal linkage
 private void Foo::f1(); 
-// PEM with external linkage
+// PEMF with external linkage
 extern private void Foo::f2();
 // PSEMF with internal linkage
 private static void Foo::f3(); 
@@ -836,20 +896,20 @@ static private void Foo::f3();
 // PSEMF with external linkage
 extern private static void Foo::f4();
 extern static private void Foo::f4();</code></pre>
-<h2 data-number="8.6" id="use-static-for-internal-linkage"><span
-class="header-section-number">8.6</span> Use <code>static</code> for
+<h2 data-number="8.7" id="use-static-for-internal-linkage"><span
+class="header-section-number">8.7</span> Use <code>static</code> for
 internal linkage</h2>
-<p>The 2013 version of this proposal made PEM and PSEMF have external
+<p>The 2013 version of this proposal made PEMF and PSEMF have external
 linkage, and used the keyword <code>static</code> at a specific place
 (before <code>private</code>) to specify internal linkage.</p>
-<p>The downside of this method is that the word static has two different
-functions within the same line of code, and its meaning depends on its
-position:</p>
+<p>The downside of this member function is that the word static has two
+different functions within the same line of code, and its meaning
+depends on its position:</p>
 <pre><code>class Foo {
 };
 
-private void Foo::f1(); //&lt;-PEM
-private static void Foo::f2(); //&lt;-PEM with internal linkage
+private void Foo::f1(); //&lt;-PEMF
+private static void Foo::f2(); //&lt;-PEMF with internal linkage
 static private void Foo::f3(); //&lt;-PSEMF
 static private static void Foo::f4(); //&lt;-PSEMF with internal linkage</code></pre>
 <p>In the discussions on the mailing list around 2013 and in the
