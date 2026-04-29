@@ -1,4 +1,4 @@
-Private Extension Methods (2026 version)
+Private Extension Member Functions (2026 version)
 ==============
 
 This is a rewrite of an earlier proposal for private extension methods.
