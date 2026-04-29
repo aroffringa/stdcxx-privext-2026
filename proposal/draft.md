@@ -197,7 +197,7 @@ foo.cc
        return i_ * 2;
     }
 
-Private extension constructors
+Private extension constructors and assignment
 --------------
 
 We can also declare additional private constructors:
@@ -226,8 +226,8 @@ In summary, all of the following are errors:
 
     private Foo::Foo(); //Error: Cannot declare a PEMF default constructor
     private Foo::Foo(const Foo&); //Error: Cannot declare a PEMF copy constructor
-    private Foo& Foo::operator=(const Foo&); //Error: Cannot declare a PEMF copy assignment operator
     private Foo::Foo(Foo&&); //Error: Cannot declare a PEMF move constructor
+    private Foo& Foo::operator=(const Foo&); //Error: Cannot declare a PEMF copy assignment operator
     private Foo& Foo::operator=(Foo&&); //Error: Cannot declare a PEMF move assignment operator
     private Foo::~Foo(); //Error: Cannot declare a PEMF destructor
 
@@ -404,7 +404,11 @@ extension member functions will have the following properties:
   specification, attributes and trailing return type.
 - The parameter list may include an explicit `this` parameter to deduce `this`.
 - Overloading member functions by their parameter list is allowed.
-- Operator overloading using private extension member functions is allowed.
+- Operator overloading using private extension member functions is allowed,
+  with the exception of the assignment operator (see section about constructor
+  and assignment operator).
+- Conversion operators of the form `private S::operator T() const` are also
+  allowed.
 - Declaring a PEMF with the same name as a base class member function causes the
   base class member function name to be hidden, from that point on, in the same way as
   when the private member function was declared inside the class.

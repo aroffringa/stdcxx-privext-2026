@@ -340,9 +340,10 @@ int Foo::pubf() {
 int Foo::privf() {
    return i_ * 2;
 }</code></pre>
-<h2 data-number="5.2" id="private-extension-constructors"><span
-class="header-section-number">5.2</span> Private extension
-constructors</h2>
+<h2 data-number="5.2"
+id="private-extension-constructors-and-assignment"><span
+class="header-section-number">5.2</span> Private extension constructors
+and assignment</h2>
 <p>We can also declare additional private constructors:</p>
 <pre><code>class Foo {
   public:
@@ -367,8 +368,8 @@ the one-definition rule.</p>
 
 private Foo::Foo(); //Error: Cannot declare a PEMF default constructor
 private Foo::Foo(const Foo&amp;); //Error: Cannot declare a PEMF copy constructor
-private Foo&amp; Foo::operator=(const Foo&amp;); //Error: Cannot declare a PEMF copy assignment operator
 private Foo::Foo(Foo&amp;&amp;); //Error: Cannot declare a PEMF move constructor
+private Foo&amp; Foo::operator=(const Foo&amp;); //Error: Cannot declare a PEMF copy assignment operator
 private Foo&amp; Foo::operator=(Foo&amp;&amp;); //Error: Cannot declare a PEMF move assignment operator
 private Foo::~Foo(); //Error: Cannot declare a PEMF destructor</code></pre>
 <h2 data-number="5.3"
@@ -536,7 +537,10 @@ parameter to deduce <code>this</code>.</li>
 <li>Overloading member functions by their parameter list is
 allowed.</li>
 <li>Operator overloading using private extension member functions is
-allowed.</li>
+allowed, with the exception of the assignment operator (see section
+about constructor and assignment operator).</li>
+<li>Conversion operators of the form
+<code>private S::operator T() const</code> are also allowed.</li>
 <li>Declaring a PEMF with the same name as a base class member function
 causes the base class member function name to be hidden, from that point
 on, in the same way as when the private member function was declared
