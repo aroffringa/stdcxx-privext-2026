@@ -393,16 +393,22 @@ of a class template which calls free function templates.
 Other properties of PEMFs
 --------------------
 
-For completeness, in addition to what is already discussed, private
-extension member functions will have the following properties:
+In addition to what is already discussed, private extension member functions
+will have the following properties:
 
 - After defining a PEMF or PSEMF, they participate in member look-up as if
   they were declared as a private member function inside the class definition.
-- Private extension member functions support the same qualifiers as normal member functions,
-  including `const`/`volatile` qualifiers, ref-qualification, exception
-  specification, attributes and trailing return type.
+- Private extension member functions support the same qualifiers as normal
+  member functions, including `const`/`volatile` qualifiers, ref-qualification,
+  exception specification, attributes and trailing return type.
 - The parameter list may include an explicit `this` parameter to deduce `this`.
-- Overloading member functions by their parameter list is allowed.
+- A private extension member function declaration may not redefine an existing
+  member function with the same parameters and cv qualifiers as a previously
+  declared non-extension member.
+  This also holds for generated or rewritten members, i.e., the comparison
+  operators.
+- Overloading member functions by their parameter list or cv qualitifiers is
+  allowed.
 - Operator overloading using private extension member functions is allowed,
   with the exception of the assignment operator (see section about constructor
   and assignment operator).
@@ -413,6 +419,11 @@ extension member functions will have the following properties:
   when the private member function was declared inside the class.
 - Adding `inline` to a private extension member function is, as usual, a directive
   for the compiler to expand the function inline.
+
+Proposed wording changes
+=====================
+
+To be written...
 
 Technical Summary
 =====================
@@ -542,15 +553,15 @@ Practically, this achieves most of the benefits of PEMF, but it has some drawbac
 * This technique is obscure and not well known, a first class language feature would be more accessible to new users.
 * The fact that this technique was discovered shows a need for PEMFs in the community.
 
-ODR pitfalls
+One-definition-rule pitfalls
 --------------------
 
 Because private class member functions are proposed to be no longer all declared
-in the class scope, this proposal adds new ways of violating the ODR. On
-possible way is by the instantiation of a template class with and without
-a private extension member function defined:
+in the class scope, this proposal adds new ways of violating the one-definition
+rule (ODR). An example is by instantiating a template class with and
+without a private extension member function defined:
 
-Header:
+Header `foo.h`:
 
     template<typename T>
     class Foo {
@@ -566,19 +577,110 @@ Header:
       // int A(int); -> not declared, extended later
     }
 
-    struct X {
-      Foo<int> f; // If Foo instantiated here → A(int) does not participate
-    };
+    Foo<int> f; // If Foo instantiated here → A(int) does not participate
     
 Implementation:
+
+    #include "foo.h"
 
     template<typename T>
     private int Foo<T>::A(double) {}
 
-    struct Y {
-      Foo<int> f; // Foo instantiated here → A(int) does participate
+    Foo<int> f; // Foo instantiated here → A(int) does participate
+
+We considered four options with different levels of ODR pitfalls:
+
+**Option 1: PEMFs may not overload at all**
+
+This results in the simplest and safest rule, but constrains the new feature
+the most. If PEMFs may not overload at all, there are no new ways to easily
+violate the ODR (other than literally defining the sam PEMF with a different
+implementation in two translation units)
+
+**Option 2: PEMFs may only overload other PEMFs**
+
+Being able to overload PEMFs adds some expresiveness. It opens a way of
+breaking the ODR, but it is quite contrived:
+
+Header file `foo.h`:
+
+    template<typename T>
+    struct Foo {
+      void A(T());
+    };
+   
+    private template<typename T>
+    inline Foo<T>::F(double x) { .. }
+   
+    template<typename T>
+    inline Foo<T>::A(T t) {
+      F(t);
+    }
+
+Implementation file of TU1
+
+    #include "foo.h"
+
+    private template<typename T>
+    inline Foo<T>::F(int x) { .. }
+   
+    // Instantiate Foo with F(int) overload:
+    Foo<int> foo; 
+   
+Implementation file of TU2
+
+    #include "foo.h"
+   
+    // Instantiate Foo without F(int) overload:
+    Foo<int> foo;
+
+In this example, member A() would call different overloads in the two
+translation units, causing an ODR violation. While this disallows overloading
+already declared member functions, this can mostly be work-around.
+
+Providing an extended overloaded member function can be done as follows:
+
+    class Foo {
+      void F(int i) { .. }
     };
 
+    private Foo::ExtF(int i) { F(i); }
+    private Foo::ExtF(double d) { /* Do something different */ }
+
+**Option 3: PEMFs may only overload other PEMFs or the constructor**
+
+Compared to option 2, this would make it possible to introduce PEMF
+constructors for deligating. Because the constructor is special, it
+is less easy to use work arounds (e.g. the on from option 2). However,
+it adds a way to violate the ODR:
+
+Header `foo.h`:
+
+    template<typename T>
+    struct Foo {
+      Foo() : Foo(T()) {}
+      Foo(double) { .. }
+    };
+    
+Implementation of TU1:
+
+    #include "foo.h"
+
+    template<typename T>
+    private Foo<T>::Foo(int) { .. }
+
+    Foo<int> f;
+
+Implementation of TU2:
+
+    #include "foo.h"
+
+    Foo<int> f;
+
+**Option 4: PEMFs may overload all member functions**
+
+This options provides the most flexibility for using PEMFs with the most
+options to violate the ODR.
 
 Alternatives and Additions
 ===================

@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>C++ standard proposal: Private extension methods</title>
   <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     html {
       color: #1a1a1a;
       background-color: #fdfdfd;
@@ -60,6 +63,10 @@
     img {
       max-width: 100%;
     }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
     h1, h2, h3, h4, h5, h6 {
       margin-top: 1.4em;
     }
@@ -84,6 +91,7 @@
       color: #606060;
     }
     code {
+      white-space: pre-wrap;
       font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
       font-size: 85%;
       margin: 0;
@@ -103,8 +111,8 @@
      overflow: visible;
     }
     hr {
-      background-color: #1a1a1a;
       border: none;
+      border-top: 1px solid #1a1a1a;
       height: 1px;
       margin: 1em 0;
     }
@@ -147,7 +155,6 @@
     #TOC a:not(:hover) {
       text-decoration: none;
     }
-    code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
     div.column{flex: auto; overflow-x: auto;}
@@ -524,8 +531,8 @@ template class X&lt;double&gt;;/* Will instantiate the following:
                           */</code></pre>
 <h2 data-number="5.8" id="other-properties-of-pemfs"><span
 class="header-section-number">5.8</span> Other properties of PEMFs</h2>
-<p>For completeness, in addition to what is already discussed, private
-extension member functions will have the following properties:</p>
+<p>In addition to what is already discussed, private extension member
+functions will have the following properties:</p>
 <ul>
 <li>After defining a PEMF or PSEMF, they participate in member look-up
 as if they were declared as a private member function inside the class
@@ -536,8 +543,12 @@ normal member functions, including
 exception specification, attributes and trailing return type.</li>
 <li>The parameter list may include an explicit <code>this</code>
 parameter to deduce <code>this</code>.</li>
-<li>Overloading member functions by their parameter list is
-allowed.</li>
+<li>A private extension member function declaration may not redefine an
+existing member function with the same parameters and cv qualifiers as a
+previously declared non-extension member. This also holds for generated
+or rewritten members, i.e., the comparison operators.</li>
+<li>Overloading member functions by their parameter list or cv
+qualitifiers is allowed.</li>
 <li>Operator overloading using private extension member functions is
 allowed, with the exception of the assignment operator (see section
 about constructor and assignment operator).</li>
@@ -551,8 +562,11 @@ inside the class.</li>
 is, as usual, a directive for the compiler to expand the function
 inline.</li>
 </ul>
-<h1 data-number="6" id="technical-summary"><span
-class="header-section-number">6</span> Technical Summary</h1>
+<h1 data-number="6" id="proposed-wording-changes"><span
+class="header-section-number">6</span> Proposed wording changes</h1>
+<p>To be written…</p>
+<h1 data-number="7" id="technical-summary"><span
+class="header-section-number">7</span> Technical Summary</h1>
 <p>In summary, this proposal makes the following changes to the
 standard:</p>
 <ul>
@@ -565,11 +579,11 @@ access control and internal linkage.</li>
 <code>private</code> keyword to declare a private static extension
 member function.</li>
 </ul>
-<h1 data-number="7" id="counter-arguments"><span
-class="header-section-number">7</span> Counter Arguments</h1>
+<h1 data-number="8" id="counter-arguments"><span
+class="header-section-number">8</span> Counter Arguments</h1>
 <p>We will now address some arguments against this proposal.</p>
-<h2 data-number="7.1" id="violating-access-control"><span
-class="header-section-number">7.1</span> Violating Access Control</h2>
+<h2 data-number="8.1" id="violating-access-control"><span
+class="header-section-number">8.1</span> Violating Access Control</h2>
 <p>One immediate and common objection to this proposal is that it may
 break encapsulation by allowing the programmer to subvert access
 control. By definition, a PEMF has private access control and thus they
@@ -620,8 +634,8 @@ is effectively impossible). In the end, if a programmer wants badly
 enough to subvert the system, he’ll find a way, [<a
 href="GotW076">GotW076</a>].</p>
 </blockquote>
-<h2 data-number="7.2" id="there-are-already-current-workarounds"><span
-class="header-section-number">7.2</span> There are already current
+<h2 data-number="8.2" id="there-are-already-current-workarounds"><span
+class="header-section-number">8.2</span> There are already current
 workarounds</h2>
 <p>Likely the most compelling argument against the proposal is that
 there are already a set of current workarounds:</p>
@@ -695,13 +709,15 @@ feature would be more accessible to new users.</li>
 <li>The fact that this technique was discovered shows a need for PEMFs
 in the community.</li>
 </ul>
-<h2 data-number="7.3" id="odr-pitfalls"><span
-class="header-section-number">7.3</span> ODR pitfalls</h2>
+<h2 data-number="8.3" id="one-definition-rule-pitfalls"><span
+class="header-section-number">8.3</span> One-definition-rule
+pitfalls</h2>
 <p>Because private class member functions are proposed to be no longer
 all declared in the class scope, this proposal adds new ways of
-violating the ODR. On possible way is by the instantiation of a template
-class with and without a private extension member function defined:</p>
-<p>Header:</p>
+violating the one-definition rule (ODR). An example is by instantiating
+a template class with and without a private extension member function
+defined:</p>
+<p>Header <code>foo.h</code>:</p>
 <pre><code>template&lt;typename T&gt;
 class Foo {
 public:
@@ -716,18 +732,90 @@ private:
   // int A(int); -&gt; not declared, extended later
 }
 
-struct X {
-  Foo&lt;int&gt; f; // If Foo instantiated here → A(int) does not participate
-};</code></pre>
+Foo&lt;int&gt; f; // If Foo instantiated here → A(int) does not participate</code></pre>
 <p>Implementation:</p>
-<pre><code>template&lt;typename T&gt;
+<pre><code>#include &quot;foo.h&quot;
+
+template&lt;typename T&gt;
 private int Foo&lt;T&gt;::A(double) {}
 
-struct Y {
-  Foo&lt;int&gt; f; // Foo instantiated here → A(int) does participate
+Foo&lt;int&gt; f; // Foo instantiated here → A(int) does participate</code></pre>
+<p>We considered four options with different levels of ODR pitfalls:</p>
+<p><strong>Option 1: PEMFs may not overload at all</strong></p>
+<p>This results in the simplest and safest rule, but constrains the new
+feature the most. If PEMFs may not overload at all, there are no new
+ways to easily violate the ODR (other than literally defining the sam
+PEMF with a different implementation in two translation units)</p>
+<p><strong>Option 2: PEMFs may only overload other PEMFs</strong></p>
+<p>Being able to overload PEMFs adds some expresiveness. It opens a way
+of breaking the ODR, but it is quite contrived:</p>
+<p>Header file <code>foo.h</code>:</p>
+<pre><code>template&lt;typename T&gt;
+struct Foo {
+  void A(T());
+};
+
+private template&lt;typename T&gt;
+inline Foo&lt;T&gt;::F(double x) { .. }
+
+template&lt;typename T&gt;
+inline Foo&lt;T&gt;::A(T t) {
+  F(t);
+}</code></pre>
+<p>Implementation file of TU1</p>
+<pre><code>#include &quot;foo.h&quot;
+
+private template&lt;typename T&gt;
+inline Foo&lt;T&gt;::F(int x) { .. }
+
+// Instantiate Foo with F(int) overload:
+Foo&lt;int&gt; foo; </code></pre>
+<p>Implementation file of TU2</p>
+<pre><code>#include &quot;foo.h&quot;
+
+// Instantiate Foo without F(int) overload:
+Foo&lt;int&gt; foo;</code></pre>
+<p>In this example, member A() would call different overloads in the two
+translation units, causing an ODR violation. While this disallows
+overloading already declared member functions, this can mostly be
+work-around.</p>
+<p>Providing an extended overloaded member function can be done as
+follows:</p>
+<pre><code>class Foo {
+  void F(int i) { .. }
+};
+
+private Foo::ExtF(int i) { F(i); }
+private Foo::ExtF(double d) { /* Do something different */ }</code></pre>
+<p><strong>Option 3: PEMFs may only overload other PEMFs or the
+constructor</strong></p>
+<p>Compared to option 2, this would make it possible to introduce PEMF
+constructors for deligating. Because the constructor is special, it is
+less easy to use work arounds (e.g. the on from option 2). However, it
+adds a way to violate the ODR:</p>
+<p>Header <code>foo.h</code>:</p>
+<pre><code>template&lt;typename T&gt;
+struct Foo {
+  Foo() : Foo(T()) {}
+  Foo(double) { .. }
 };</code></pre>
-<h1 data-number="8" id="alternatives-and-additions"><span
-class="header-section-number">8</span> Alternatives and Additions</h1>
+<p>Implementation of TU1:</p>
+<pre><code>#include &quot;foo.h&quot;
+
+template&lt;typename T&gt;
+private Foo&lt;T&gt;::Foo(int) { .. }
+
+Foo&lt;int&gt; f;</code></pre>
+<p>Implementation of TU2:</p>
+<pre><code>#include &quot;foo.h&quot;
+
+Foo&lt;int&gt; f;</code></pre>
+<p><strong>Option 4: PEMFs may overload all member
+functions</strong></p>
+<p>This options provides the most flexibility for using PEMFs with the
+most options to violate the ODR.</p>
+<h1 data-number="9" id="alternatives-and-additions"><span
+class="header-section-number">9</span> Alternatives and Additions</h1>
 <p>The current approach uses the private keyword to declare a PEMF or
 PSEMF. What are the consequences of this syntax?</p>
 <p>Pros:</p>
@@ -746,8 +834,8 @@ alternatives.</p>
 <p>As an interesting side note: the authors of the original 2013
 proposal and the 2026 proposal came independently with the exact same
 syntax and solution for private extension member functions.</p>
-<h2 data-number="8.1" id="use-a-different-keyword"><span
-class="header-section-number">8.1</span> Use a different keyword</h2>
+<h2 data-number="9.1" id="use-a-different-keyword"><span
+class="header-section-number">9.1</span> Use a different keyword</h2>
 <p>We could use a keyword other than private. Here are some possible
 candidates, we believe them all to be inferior to private.</p>
 <ul>
@@ -765,8 +853,8 @@ New keywords are something that should only be introduced if there is a
 really good reason. This is a small proposal that does not merit a new
 keyword.</li>
 </ul>
-<h2 data-number="8.2" id="extend-a-class-without-private-keyword"><span
-class="header-section-number">8.2</span> Extend a class without
+<h2 data-number="9.2" id="extend-a-class-without-private-keyword"><span
+class="header-section-number">9.2</span> Extend a class without
 <code>private</code> keyword</h2>
 <p>Another approach is to avoid the use of a keyword entirely.</p>
 <pre><code>class Foo {};
@@ -786,8 +874,8 @@ function, he would get a compiler error. Now he will silently declare a
 new private extension member function. This error is likely to be caught
 during link time however.</li>
 </ul>
-<h2 data-number="8.3" id="reopening-the-class-scope"><span
-class="header-section-number">8.3</span> Reopening the class scope</h2>
+<h2 data-number="9.3" id="reopening-the-class-scope"><span
+class="header-section-number">9.3</span> Reopening the class scope</h2>
 <p>One possible addition to this proposal would be to allow reopening
 the class private scope to add not only new member functions but also
 typedefs and nested types. This is somewhat reminiscent of the style of
@@ -826,9 +914,9 @@ namespace {
 <p>A downside of this is that the use of an anonymous namespace for what
 often will be the common pattern is verbose. It is also inconsistent to
 declare the class in two different namespaces.</p>
-<h2 data-number="8.4"
+<h2 data-number="9.4"
 id="extending-other-types-of-private-fields-of-a-class"><span
-class="header-section-number">8.4</span> Extending other types of
+class="header-section-number">9.4</span> Extending other types of
 private fields of a class</h2>
 <p>The following class fields are, like private member functions, also
 not part of the class interface and do not change the ABI of the
@@ -857,9 +945,9 @@ and detailed effect, and it complicates the language more than when we
 allow just the addition of private static members function.</p>
 <p>We propose therefore to only allow extension of private static data
 members.</p>
-<h2 data-number="8.5"
+<h2 data-number="9.5"
 id="explicitly-enabling-private-extension-member-functions"><span
-class="header-section-number">8.5</span> Explicitly enabling private
+class="header-section-number">9.5</span> Explicitly enabling private
 extension member functions</h2>
 <p>The issue of introducing an access loophole can be mitigated by
 requiring the extended class to be marked in some way. A possible syntax
@@ -891,8 +979,8 @@ that, explicit marking seems to overdo it.</p>
 <p>Another argument against this approach is that requiring a class to
 be marked to allow extension is the wrong default setting: protecting a
 class against extension seems hardly ever relevant.</p>
-<h2 data-number="8.6" id="allowing-external-linkage"><span
-class="header-section-number">8.6</span> Allowing external linkage</h2>
+<h2 data-number="9.6" id="allowing-external-linkage"><span
+class="header-section-number">9.6</span> Allowing external linkage</h2>
 <p>In this proposal, we focus only on PEMFs and PSEMF with internal
 linkage, because this covers most of the use-cases. A future extension
 could allow external linkage, which would allow declaring extensions
@@ -914,8 +1002,8 @@ static private void Foo::f3();
 // PSEMF with external linkage
 extern private static void Foo::f4();
 extern static private void Foo::f4();</code></pre>
-<h2 data-number="8.7" id="use-static-for-internal-linkage"><span
-class="header-section-number">8.7</span> Use <code>static</code> for
+<h2 data-number="9.7" id="use-static-for-internal-linkage"><span
+class="header-section-number">9.7</span> Use <code>static</code> for
 internal linkage</h2>
 <p>The 2013 version of this proposal made PEMF and PSEMF have external
 linkage, and used the keyword <code>static</code> at a specific place
@@ -933,8 +1021,8 @@ static private static void Foo::f4(); //&lt;-PSEMF with internal linkage</code><
 <p>In the discussions on the mailing list around 2013 and in the
 discussions in 2026, there was a preference to use internal linkage by
 default.</p>
-<h1 data-number="9" id="changes-compared-to-the-2013-proposal"><span
-class="header-section-number">9</span> Changes compared to the 2013
+<h1 data-number="10" id="changes-compared-to-the-2013-proposal"><span
+class="header-section-number">10</span> Changes compared to the 2013
 proposal</h1>
 <p>The high-level changes between this proposal and the 2013 proposal
 [<a href="#N3863">N3863</a>] are:</p>
@@ -954,12 +1042,12 @@ proposal mailing list have been incorporated, and with the help of
 discussions on the mailing list, many sections were added or extended
 with details.</li>
 </ul>
-<h1 data-number="10" id="acknowledgements"><span
-class="header-section-number">10</span> Acknowledgements</h1>
+<h1 data-number="11" id="acknowledgements"><span
+class="header-section-number">11</span> Acknowledgements</h1>
 <p>Thank you to everyone on the std proposals forum for feedback and
 suggestions.</p>
-<h1 data-number="11" id="references"><span
-class="header-section-number">11</span> References</h1>
+<h1 data-number="12" id="references"><span
+class="header-section-number">12</span> References</h1>
 <ul>
 <li><a name="Proposal2013"></a>[Proposal2013] stdcxx-privext Git
 repository of M. Fioravante, <a
